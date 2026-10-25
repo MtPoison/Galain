@@ -164,20 +164,3 @@ grant execute on function forgot_get(), forgot_mark() to service_role;
 ## Sécurité (6e script – à lancer en dernier)
 
 Exécutez le contenu de `SECURITY.sql` (il supprime aussi la copie en clair du mot de passe : « mot de passe oublié » envoie maintenant un mot de passe temporaire) dans **SQL Editor** : blocage après 5 mots de passe faux en 15 minutes, clés de contenu limitées à la liste connue, taille maximale, 8 caractères minimum pour le mot de passe, limitation des pouces. Le site fonctionne avec ou sans ce script, mais le blocage anti force brute n'est actif qu'après son exécution.
-
-## Photos dans le stockage de fichiers (7e script)
-
-Sans cela, les photos ajoutées par l'administrateur sont gardées dans le navigateur (limite d'environ 5 Mo). Avec cela, elles sont envoyées dans Supabase Storage et le site ne garde que leur adresse.
-
-**SQL Editor → New query**, collez, puis **Run** :
-
-```sql
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('photos', 'photos', true, 2097152, array['image/jpeg', 'image/png'])
-on conflict (id) do update set public = true, file_size_limit = 2097152, allowed_mime_types = array['image/jpeg', 'image/png'];
-
-drop policy if exists "photos : envoi" on storage.objects;
-create policy "photos : envoi" on storage.objects for insert to anon with check (bucket_id = 'photos');
-```
-
-Les photos sont publiques en lecture. Aucune règle de modification ni de suppression n'existe : personne ne peut remplacer une photo existante depuis le site. Les fichiers inutilisés se suppriment à la main dans **Storage → photos**.

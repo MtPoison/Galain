@@ -97,7 +97,7 @@ function makeSortieCard(s) {
           <button type="button" class="thumb${aPouce(s.id) ? ' liked' : ''}" data-id="${esc(s.id)}" aria-label="J’aime cette sortie"><svg viewBox="0 0 24 24"><path d="M1 21h4V9H1zm22-11a2 2 0 0 0-2-2h-6.300l.9-4.600v-.3a1.500 1.500 0 0 0-.4-1.100L14.200 1 7.600 7.600A2 2 0 0 0 7 9v10a2 2 0 0 0 2 2h9a2 2 0 0 0 1.800-1.200l3-7a2 2 0 0 0 .2-.8z"/></svg></button>
         </div>
       </div>
-      <p class="card-meta"><span class="runes">ᛗ</span> ${esc(s.place)} &nbsp; <span class="runes">ᚱ</span> ${esc(s.km)}</p>
+      <p class="card-meta">${esc(s.place)}</p>
       <span class="card-more">Lire la saga</span>
     </div>`;
   el.querySelector('.star').addEventListener('click', e => {

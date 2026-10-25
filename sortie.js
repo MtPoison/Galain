@@ -9,15 +9,38 @@
     main.innerHTML = '<h1>Sortie introuvable</h1><p class="sub">Cette saga n’existe pas (encore).</p>';
     return;
   }
-  document.title = `${s.title} – Galian MCP`;
-  const an = s.date.slice(0, 4), backYear = document.getElementById('back-year');
-  backYear.href = `annee.html?y=${an}`; backYear.textContent = `Retour aux sorties ${an}`;
+  const backYear = document.getElementById('back-year');
 
   const img = (src, alt) => { const i = new Image(); i.alt = alt; i.loading = 'lazy'; i.src = safeSrc(src); i.addEventListener('error', () => { i.onerror = null; i.src = PHOTO_FALLBACK; }, { once: true }); return i; };
 
-  main.querySelector('.s-date').textContent = fmtDate(s.date);
-  main.querySelector('h1').textContent = s.title;
-  main.querySelector('.s-meta').innerHTML = `<span>ᛗ ${esc(s.place)}</span><span>ᚱ ${esc(s.km)}</span><span>ᚹ ${Number(s.riders) || 0} motards</span>`;
+  /* en-tête : titre, date, lieu */
+  function renderEntete() {
+    document.title = `${s.title} – Galian MCP`;
+    const an = s.date.slice(0, 4);
+    backYear.href = `annee.html?y=${an}`; backYear.textContent = `Retour aux sorties ${an}`;
+    main.querySelector('.s-date').textContent = fmtDate(s.date);
+    main.querySelector('h1').textContent = s.title;
+    main.querySelector('.s-meta').innerHTML = s.place ? `<span class="s-place">${esc(s.place)}</span>` : '';
+  }
+  renderEntete();
+
+  /* mode administrateur : crayon pour modifier les informations de la sortie */
+  if (Admin.on) {
+    const edit = document.createElement('button');
+    edit.type = 'button'; edit.className = 'adm-btn adm-info-edit'; edit.textContent = '✎ Modifier les informations';
+    edit.addEventListener('click', () => Admin.form('Modifier la sortie', [
+      { name: 'title', label: 'Titre', required: true },
+      { name: 'date', label: 'Date', type: 'date', required: true },
+      { name: 'place', label: 'Lieu' },
+    ], { title: s.title, date: s.date, place: s.place }, v => {
+      if (!v.title.trim() || !v.date) return false;
+      const avant = { title: s.title, date: s.date, place: s.place };
+      Object.assign(s, { title: v.title.trim(), date: v.date, place: v.place || '' });
+      if (!Store.set('sorties', SORTIES)) { Object.assign(s, avant); return false; }
+      renderEntete();
+    }));
+    main.querySelector('.s-meta').after(edit);
+  }
 
   /* image principale : la première photo ; les suivantes forment un carrousel qui boucle */
   const [premiere, ...autres] = s.images;
@@ -52,10 +75,47 @@
   }
 
   /* mode administrateur : pas de carrousel, les photos secondaires sont empilées par ligne de trois et se déplacent à la poignée */
+  let selection = false;                                       // mode « sélection » : cocher plusieurs photos puis les supprimer d'un coup
+  const choix = new Set();                                     // indices (dans la grille) des photos cochées
+  addEventListener('keydown', e => {                           // Échap quitte le mode sélection (sans fenêtre ouverte)
+    if (e.key === 'Escape' && selection && !document.querySelector('.adm-modal')) { selection = false; choix.clear(); adminGrid(); }
+  });
   function adminGrid() {
     const car2 = document.getElementById('carousel');
     car2.hidden = false; car2.innerHTML = '';
+    car2.classList.toggle('car-select', selection);
     const grid = document.createElement('div'); grid.className = 'car-grid'; car2.append(grid);
+
+    const bar = document.createElement('div'); bar.className = 'adm-selbar'; car2.prepend(bar);
+    const mkBtn = (t, fn, cls = '') => { const b = document.createElement('button'); b.type = 'button'; b.className = 'adm-btn ' + cls; b.textContent = t; b.addEventListener('click', fn); bar.append(b); return b; };
+    const total = s.images.length - 1;
+    if (!selection) {
+      if (total > 0) mkBtn('☑ Sélectionner', () => { selection = true; choix.clear(); adminGrid(); });
+    } else {
+      const del = mkBtn('', () => {
+        if (!choix.size) return;
+        Admin.confirm(`Supprimer ${choix.size} photo${choix.size > 1 ? 's' : ''} ?`, () => {
+          const avant = s.images.slice();
+          s.images = [s.images[0], ...s.images.slice(1).filter((_, i) => !choix.has(i))];
+          if (!Store.set('sorties', SORTIES)) { s.images = avant; return; }
+          selection = false; choix.clear(); adminGrid();
+        });
+      }, 'primary danger');
+      const maj = () => {
+        del.textContent = choix.size ? `Supprimer (${choix.size})` : 'Supprimer';
+        del.disabled = !choix.size; all.textContent = choix.size === total ? 'Tout désélectionner' : 'Tout sélectionner';
+        grid.querySelectorAll('.adm-img').forEach(f => f.classList.toggle('sel', choix.has(+f.dataset.i)));
+      };
+      const all = mkBtn('', () => { if (choix.size === total) choix.clear(); else for (let i = 0; i < total; i++) choix.add(i); maj(); });
+      mkBtn('Annuler', () => { selection = false; choix.clear(); adminGrid(); });
+      grid.addEventListener('click', e => {
+        const fig = e.target.closest('.adm-img'); if (!fig) return;
+        const i = +fig.dataset.i; if (choix.has(i)) choix.delete(i); else choix.add(i);
+        maj();
+      });
+      queueMicrotask(maj);                                     // après la création des vignettes
+    }
+
     s.images.slice(1).forEach((src, i) => {
       const fig = document.createElement('figure'); fig.className = 'adm-img'; fig.dataset.i = i;
       fig.appendChild(img(src, `${s.title} – photo ${i + 2}`));

@@ -117,14 +117,7 @@ const Admin = (() => {
         g.drawImage(img, 0, 0, c.width, c.height);
       }
       URL.revokeObjectURL(url);
-      /* en ligne : l'image part dans le stockage Supabase et seule son adresse est gardée (pas de limite de 5 Mo du navigateur) ;
-         si l'envoi échoue (bucket pas créé, pas de réseau), repli sur l'image intégrée au brouillon */
-      const png = mode === 'logo', type = png ? 'image/png' : 'image/jpeg';
-      c.toBlob(async blob => {
-        const lien = blob && Store.remote ? await Store.upload(blob, png ? 'png' : 'jpg') : null;
-        if (!lien && Store.remote && blob) api.toast('Envoi vers Supabase impossible (' + (Store.uploadError || 'inconnu') + ') : photo gardée dans le navigateur.', true);
-        resolve(lien || c.toDataURL(type, 0.72));
-      }, type, 0.72);
+      resolve(mode === 'logo' ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.72));
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image illisible')); };
     img.src = url;
@@ -387,14 +380,6 @@ const Admin = (() => {
         this.disabled = false; this.textContent = ok ? 'Sauvegardé ✓' : 'Sauvegarder';
         if (ok) setTimeout(api.recharger, 500);                       // modifications publiées : le site se recharge tout seul pour les afficher
       }, 'primary');
-      btn('Migrer les images', async function () {
-        this.disabled = true; this.textContent = 'Migration…';
-        const r = await Store.migrateImages((n, t) => { this.textContent = `Migration ${n}/${t}…`; });
-        this.disabled = false; this.textContent = 'Migrer les images';
-        if (r.erreur) alert('Migration interrompue (' + r.erreur + '). ' + r.n + ' image(s) déjà migrée(s). Vérifiez que le script SQL du bucket « photos » a été exécuté.');
-        else if (!r.n) api.toast('Aucune image à migrer.');
-        else { api.toast(r.n + ' image(s) migrée(s). Cliquez sur Sauvegarder pour publier.'); setTimeout(() => location.reload(), 1200); }
-      });
       btn('Réinitialiser le mot de passe', api.changePassword);
     } else {
       btn('Exporter pour publier', exporter, 'primary');
@@ -406,14 +391,13 @@ const Admin = (() => {
     btn('Quitter', api.quit);
     document.body.append(bar);
   }
-  /* touche Échap : ferme la fenêtre ouverte, sinon quitte le mode administrateur */
+  /* touche Échap : ferme la fenêtre ouverte, sinon sort du champ en cours ; elle ne quitte plus le mode administrateur (bouton « Quitter ») */
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     const m = document.querySelector('.adm-modal');
     if (m) { m.remove(); return; }
     const a = document.activeElement;
-    if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) { a.blur(); return; }   // d'abord sortir du champ
-    if (api.on) api.quit();
+    if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) a.blur();
   });
   document.addEventListener('DOMContentLoaded', mount);
   if (document.readyState !== 'loading') mount();

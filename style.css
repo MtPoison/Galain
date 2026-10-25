@@ -641,3 +641,19 @@ body.admin-on .art-item img { cursor: default; }
 
 /* glisser-déposer d'images (mode administrateur) */
 .adm-drop-over { outline: 2px dashed var(--gold); outline-offset: 4px; background: rgba(212, 175, 55, .08); }
+
+/* sélection de plusieurs photos de la sortie (mode administrateur) */
+.adm-selbar { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
+.adm-selbar:empty { display: none; }
+.car-select .adm-handle, .car-select .adm-img .adm-x, .car-select .adm-img-add { display: none; }
+.car-select .adm-img { cursor: pointer; }
+.car-select .adm-img img { opacity: .55; transition: opacity .15s; }
+.car-select .adm-img.sel { outline: 3px solid var(--gold); outline-offset: -3px; }
+.car-select .adm-img.sel img { opacity: 1; }
+.car-select .adm-img.sel::after { content: '✓'; position: absolute; top: .4rem; right: .4rem; z-index: 6; width: 2rem; height: 2rem; display: grid; place-items: center; background: var(--gold); color: #000; font-weight: 700; }
+
+.adm-info-edit { display: block; margin: 1rem auto 0; }
+
+/* lieu de la sortie : seul, centré et bien lisible sous le titre */
+.sortie .s-meta { margin-bottom: 2rem; }
+.sortie .s-place { font-family: var(--f-head); font-size: clamp(1.2rem, 3.2vw, 1.7rem); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: center; }

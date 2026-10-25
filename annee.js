@@ -12,8 +12,7 @@
   if (!liste) {
     main.querySelector('.s-meta').textContent = 'Aucune sortie cette année-là.';
   } else {
-    const km = liste.reduce((t, s) => t + parseInt(s.km, 10), 0);
-    main.querySelector('.s-meta').innerHTML = `<span>ᚱ ${liste.length} sortie${liste.length > 1 ? 's' : ''}</span><span>ᛗ ${km} km parcourus</span>`;
+    main.querySelector('.s-meta').innerHTML = `<span>ᚱ ${liste.length} sortie${liste.length > 1 ? 's' : ''}</span>`;
     /* un bloc par mois : le nom du mois, puis les sorties en dessous */
     const conteneur = main.querySelector('.months');
     const parMois = {};

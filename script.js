@@ -226,20 +226,18 @@ const saveSorties = () => { SORTIES.sort((a, b) => b.date.localeCompare(a.date))
 
 function sortieForm(s, an) {
   const neuf = !s;
-  const base = s || { id: '', title: '', date: `${an}-06-01`, place: '', km: '', riders: '', images: [], text: [] };
+  const base = s || { id: '', title: '', date: `${an}-06-01`, place: '', images: [], text: [] };
   Admin.form(neuf ? `Ajouter une sortie (${an})` : 'Modifier la sortie', [
     { name: 'title', label: 'Titre', required: true },
     { name: 'date', label: 'Date (détermine l’année)', type: 'date', required: true },
     { name: 'place', label: 'Lieu' },
-    { name: 'km', label: 'Distance', placeholder: 'ex. 250 km' },
-    { name: 'riders', label: 'Nombre de motards', type: 'number' },
     { name: 'images', label: 'Images (la première sert de couverture)', type: 'images', mode: 'photo' },
     { name: 'text', label: 'Texte (séparez les paragraphes par une ligne vide)', type: 'textarea', rows: 9 },
   ], Object.assign({}, base, { text: base.text.join('\n\n') }), v => {
     if (!v.title.trim() || !v.date) return false;
     const out = {
       id: neuf ? `${slug(v.title) || 'sortie'}-${Date.now().toString(36)}` : base.id,
-      title: v.title.trim(), date: v.date, place: v.place || '', km: v.km || '', riders: Number(v.riders) || 0,
+      title: v.title.trim(), date: v.date, place: v.place || '',
       images: v.images.length ? v.images : ['img/sorties/vide.jpg'],
       text: v.text.split(/\n\s*\n/).map(t => t.trim()).filter(Boolean),
     };
