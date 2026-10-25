@@ -89,11 +89,11 @@
     });
   }
   const makeMat = tex => new T.ShaderMaterial({
-    uniforms: { map: { value: tex }, scale: { value: 600 } },
-    vertexShader: `attribute float aSize; attribute float aAlpha; varying float vA; uniform float scale;
-      void main(){ vA = aAlpha; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = aSize * scale / -mv.z; gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: `uniform sampler2D map; varying float vA;
-      void main(){ float a = texture2D(map, gl_PointCoord).a * vA; gl_FragColor = vec4(vec3(0.93,0.94,0.96), a); }`,
+    uniforms: { map: { value: tex }, scale: { value: 600 }, maxPx: { value: 300 } },
+    vertexShader: `attribute float aSize; attribute float aAlpha; varying float vA; uniform float scale; uniform float maxPx;
+      void main(){ vA = aAlpha; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = min(aSize * scale / -mv.z, maxPx); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `precision highp float; uniform sampler2D map; varying float vA;
+      void main(){ float a = clamp(texture2D(map, gl_PointCoord).a * vA, 0.0, 1.0); gl_FragColor = vec4(vec3(0.93,0.94,0.96), a); }`,
     transparent: true, depthWrite: false
   });
   const smokeMat = makeMat(softTexture());
@@ -163,6 +163,7 @@
     const lw = Math.min(textW / visW * 2.2 * w, h * 0.72 * 879 / 339, w * 0.98);
     logo.style.width = lw + 'px'; logo.style.top = '40%';
     smokeMat.uniforms.scale.value = textMat.uniforms.scale.value = (h * dpr) / (2 * Math.tan(FOV * Math.PI / 360));
+    smokeMat.uniforms.maxPx.value = textMat.uniforms.maxPx.value = 150 * dpr;       // taille maximale d'un grain : les très gros points s'affichent mal sur iPhone (taille limitée par le GPU)
   }
   addEventListener('resize', resize);
 
