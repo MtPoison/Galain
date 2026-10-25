@@ -575,8 +575,6 @@ body.is-dragging, body.is-dragging * { user-select: none; -webkit-user-select: n
 .moto-box img { width: auto; height: auto; max-width: 96vw; max-height: 92vh; object-fit: contain; border: 1px solid var(--gold-soft); }
 .bike img { cursor: zoom-in; }
 
-/* iPhone : pas d'effet élastique en haut de page (l'image du début ne glisse pas pendant un refresh) */
-html, body { overscroll-behavior-y: none; }
 
 /* Android / mobile : pas de rectangle bleu au toucher d'une carte, d'un lien ou d'un bouton */
 * { -webkit-tap-highlight-color: transparent; }
