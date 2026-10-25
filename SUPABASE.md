@@ -82,3 +82,53 @@ grant execute on function check_admin(text), save_content(text, text, jsonb), re
 ```
 
 Pour changer le mot de passe plus tard : relancez uniquement la ligne `insert … on conflict` avec le nouveau.
+
+## Changement du mot de passe depuis le site (3e script)
+
+```sql
+create or replace function change_admin_password(p_old text, p_new text) returns void
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if not check_admin(p_old) then raise exception 'mot de passe incorrect'; end if;
+  if length(p_new) < 4 then raise exception 'mot de passe trop court'; end if;
+  update admin_secret set hash = crypt(p_new, gen_salt('bf')) where id = 1;
+end $$;
+
+grant execute on function change_admin_password(text, text) to anon;
+```
+
+## Mot de passe oublié (4e script + e-mail)
+
+SQL Editor :
+
+```sql
+alter table admin_secret add column if not exists last_reset timestamptz;
+
+create or replace function forgot_check() returns void
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if exists (select 1 from admin_secret where last_reset > now() - interval '10 minutes') then raise exception 'trop tôt'; end if;
+end $$;
+
+create or replace function forgot_reset(p_new text) returns void
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  update admin_secret set hash = crypt(p_new, gen_salt('bf')), last_reset = now() where id = 1;
+end $$;
+
+revoke execute on function forgot_check(), forgot_reset(text) from public, anon, authenticated;
+grant execute on function forgot_check(), forgot_reset(text) to service_role;
+```
+
+E-mail : créez un compte gratuit sur https://resend.com **avec l'adresse qui doit recevoir le mot de passe**, puis **API Keys → Create API Key**.
+
+Vercel → projet → **Settings → Environment Variables**, ajoutez :
+
+| Nom | Valeur |
+|---|---|
+| `SUPABASE_URL` | `https://hnmlvvmnpmiektatkspu.supabase.co` |
+| `SUPABASE_SERVICE_KEY` | la clé **secret** de Supabase (API Keys → Secret keys) – jamais dans le code |
+| `RESEND_API_KEY` | la clé Resend |
+| `ADMIN_EMAIL` | l'adresse qui reçoit le mot de passe |
+
+Puis **Deployments → Redeploy**.

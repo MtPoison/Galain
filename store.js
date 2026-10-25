@@ -1,7 +1,8 @@
 /* ==========================================================
    GALIAN MCP – stockage des données modifiables
-   Avec Supabase (clés ci-dessous) : le contenu est stocké en ligne, les
-   modifications de l'administrateur sont publiées immédiatement.
+   Avec Supabase (clés ci-dessous) : le contenu publié est stocké en ligne.
+   Les modifications de l'administrateur restent en brouillon dans son navigateur
+   jusqu'au clic sur « Sauvegarder », qui les publie pour tous les visiteurs.
    Sans clés : site-data.js (publié) + brouillon dans le navigateur (export manuel).
    Clés : histoire, members, sorties, years, events, allies, galerie, order, likes
    ========================================================== */
@@ -11,10 +12,11 @@ const SUPABASE_URL = 'https://hnmlvvmnpmiektatkspu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_4U9ZfZdpriXK4c7Z2JUXnA_p1aWz3cR';
 
 const Store = (() => {
-  const KEY = 'galian-site-v1', CACHE = 'galian-remote-v1', PW = 'galian-admin-pw';
+  const KEY = 'galian-site-v1', CACHE = 'galian-remote-v1', PW = 'galian-admin-pw', SESSION = 'galian-admin';
   const REMOTE = !!(SUPABASE_URL && SUPABASE_KEY);
   const published = window.SITE_DATA || {};
   const clone = v => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+  const adminOn = () => { try { return sessionStorage.getItem(SESSION) === '1'; } catch (e) { return false; } };
 
   /* ---------- en ligne (Supabase) ---------- */
   /* les clés « sb_publishable_… » ne sont pas des JWT : seule l'ancienne clé anon (eyJ…) va aussi dans Authorization */
@@ -49,45 +51,54 @@ const Store = (() => {
     }
   }
 
-  /* écritures envoyées une par une, dans l'ordre */
-  let queue = Promise.resolve();
-  const send = (fn, body, what) => {
-    queue = queue.then(() => rest('rpc/' + fn, body)).then(r => r.ok ? null : r.text().then(t => { throw new Error(t); }))
-      .catch(e => alert('Enregistrement en ligne impossible (' + what + ') : ' + (e.message || e) + '\nVérifiez la connexion et le mot de passe administrateur.'));
+  /* appel d'une fonction du serveur : true si réussi, sinon message d'erreur affiché et false */
+  const call = async (fn, body, what) => {
+    try {
+      const r = await rest('rpc/' + fn, body);
+      if (r.ok) return true;
+      throw new Error((await r.json().catch(() => ({}))).message || r.statusText);
+    } catch (e) {
+      alert('Enregistrement en ligne impossible (' + what + ') : ' + (e.message || e));
+      return false;
+    }
   };
-  const push = (k, v) => send('save_content', { p_pass: adminPw(), p_key: k, p_value: v }, k);
 
-  /* ---------- sans Supabase : brouillon dans le navigateur ---------- */
+  /* ---------- brouillon : modifications de l'administrateur pas encore publiées ---------- */
   let draft = {};
   try { draft = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { draft = {}; }
   const persist = () => {
     try { localStorage.setItem(KEY, JSON.stringify(draft)); return true; }
     catch (e) { alert('Le stockage du navigateur est plein. Exportez vos données puis retirez des images.'); return false; }
   };
+  const clearDraft = () => { draft = {}; try { localStorage.removeItem(KEY); } catch (e) {} };
+  /* le brouillon n'est visible que de l'administrateur connecté */
+  const base = () => (REMOTE ? remote : {});
+  const has = (o, k) => k in o;
 
   return {
     remote: REMOTE,
-    get: (k, def) => REMOTE
-      ? (k in remote ? clone(remote[k]) : k in published ? clone(published[k]) : def)
-      : (k in draft ? clone(draft[k]) : k in published ? clone(published[k]) : def),
-    set(k, v) {
-      if (!REMOTE) { draft[k] = clone(v); return persist(); }
-      remote[k] = clone(v); dropCache(); push(k, remote[k]); return true;
+    get(k, def) {
+      if (adminOn() && has(draft, k)) return clone(draft[k]);
+      const b = base();
+      return has(b, k) ? clone(b[k]) : has(published, k) ? clone(published[k]) : def;
     },
+    set(k, v) { draft[k] = clone(v); return persist(); },
     /* tout le contenu actuel, prêt à être exporté */
-    all() { return clone(Object.assign({}, published, REMOTE ? remote : draft)); },
-    hasDraft: () => REMOTE ? false : Object.keys(draft).length > 0,
-    replaceDraft(obj) {
-      if (!REMOTE) { draft = clone(obj) || {}; return persist(); }
-      remote = clone(obj) || {}; dropCache();
-      send('reset_content', { p_pass: adminPw() }, 'import');
-      Object.entries(remote).forEach(([k, v]) => push(k, v));
-      queue.then(() => location.reload());
-      return false;                                              // le rechargement est fait une fois tout envoyé
+    all() { return clone(Object.assign({}, published, base(), adminOn() ? draft : {})); },
+    hasDraft: () => Object.keys(draft).length > 0,
+    replaceDraft(obj) { draft = clone(obj) || {}; return persist(); },
+    /* publie le brouillon pour tous les visiteurs ; true si tout est enregistré */
+    async save() {
+      for (const k of Object.keys(draft)) if (!(await call('save_content', { p_pass: adminPw(), p_key: k, p_value: draft[k] }, k))) return false;
+      Object.assign(remote, draft); clearDraft(); dropCache();
+      return true;
     },
-    resetDraft() {
-      if (!REMOTE) { draft = {}; try { localStorage.removeItem(KEY); } catch (e) {} return; }
-      remote = {}; dropCache(); send('reset_content', { p_pass: adminPw() }, 'réinitialisation');
+    discardDraft: clearDraft,
+    /* efface tout : le brouillon et, en ligne, le contenu publié */
+    async resetAll() {
+      if (REMOTE && !(await call('reset_content', { p_pass: adminPw() }, 'réinitialisation'))) return false;
+      remote = {}; dropCache(); clearDraft();
+      return true;
     },
     /* connexion administrateur : le mot de passe est vérifié par le serveur */
     async checkAdmin(pw) {
@@ -95,8 +106,12 @@ const Store = (() => {
       if (!r.ok) throw new Error('Serveur injoignable');
       return (await r.json()) === true;
     },
+    async changePassword(ancien, neuf) {
+      if (!(await call('change_admin_password', { p_old: ancien, p_new: neuf }, 'mot de passe'))) return false;
+      try { sessionStorage.setItem(PW, neuf); } catch (e) {}
+      return true;
+    },
     setAdminPw(pw) { try { sessionStorage.setItem(PW, pw); } catch (e) {} },
     clearAdminPw() { try { sessionStorage.removeItem(PW); } catch (e) {} },
-    whenSaved: () => queue,
   };
 })();

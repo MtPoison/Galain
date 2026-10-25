@@ -559,3 +559,12 @@ body.is-dragging, body.is-dragging * { user-select: none; -webkit-user-select: n
 .carousel.car-nav .car-btn.prev { left: 0; }
 .carousel.car-nav .car-btn.next { right: 0; }
 @media (max-width: 600px) { .carousel.car-nav { padding: 0 3.2rem; } .carousel.car-nav .car-btn.prev { left: 0; } .carousel.car-nav .car-btn.next { right: 0; } }
+
+/* ---------- message temporaire (3 s) ---------- */
+.adm-toast { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1000; max-width: min(90vw, 28rem); padding: .9rem 1.6rem; background: #0a0a0a; color: var(--gold); border: 1px solid var(--gold); font-family: var(--f-head); letter-spacing: .08em; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.6); animation: toast-in .3s ease; transition: opacity .3s; }
+.adm-toast.error { color: #e0a0a0; border-color: #a04444; }
+.adm-toast.out { opacity: 0; }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)); } }
+.adm-forgot { display: block; margin-top: 1rem; text-align: center; font-size: .85rem; color: var(--muted); text-decoration: underline; }
+.adm-forgot:hover { color: var(--gold); }
+.adm-err { display: block; min-height: 1.1em; margin-top: .3rem; color: #ff5c5c; font-size: .85rem; }

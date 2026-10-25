@@ -132,6 +132,25 @@ const Admin = (() => {
     no.focus();                                                  // par défaut, Entrée annule : plus prudent
   };
 
+  /* confirmation protégée : `onOk` n'est appelé que si le mot de passe administrateur est correct */
+  api.confirmPassword = (message, onOk, label = 'Confirmer') => {
+    const f = el('form', 'adm-form'), txt = el('p', 'adm-confirm-text'), i = el('input'), msg = el('small', 'adm-hint', '');
+    txt.textContent = message; i.type = 'password'; i.placeholder = 'Mot de passe'; i.autocomplete = 'current-password';
+    const bar = el('div', 'adm-actions'), ok = el('button', 'adm-btn primary danger', label), no = el('button', 'adm-btn', 'Annuler');
+    ok.type = 'submit'; no.type = 'button'; bar.append(no, ok);
+    f.append(el('span', 'adm-confirm-rune runes', 'ᛉ'), txt, i, msg, bar);
+    const m = modal('Êtes-vous sûr ?', f); m.box.classList.add('adm-box-confirm');
+    no.onclick = m.close; i.focus();
+    f.onsubmit = async e => {
+      e.preventDefault(); msg.textContent = 'Vérification…';
+      let bon;
+      try { bon = Store.remote ? await Store.checkAdmin(i.value) : i.value === getPass(); }
+      catch (err) { msg.textContent = 'Connexion au serveur impossible.'; return; }
+      if (!bon) { msg.textContent = 'Mot de passe incorrect.'; i.select(); return; }
+      m.close(); onOk();
+    };
+  };
+
   /* ---------- formulaire générique ---------- */
   api.form = (title, fields, values, onSubmit) => {
     const f = el('form', 'adm-form'), vals = Object.assign({}, values);
@@ -198,6 +217,19 @@ const Admin = (() => {
     const bar = el('div', 'adm-actions'), ok = el('button', 'adm-btn primary', 'Entrer'), no = el('button', 'adm-btn', 'Annuler');
     ok.type = 'submit'; no.type = 'button'; bar.append(no, ok);
     f.append(i, msg, bar);
+    if (Store.remote) {
+      const oublie = el('a', 'adm-forgot', 'Mot de passe oublié ?'); oublie.href = '#';
+      oublie.onclick = async e => {
+        e.preventDefault(); msg.textContent = 'Envoi en cours…';
+        try {
+          const r = await fetch('/api/mot-de-passe-oublie', { method: 'POST' }), d = await r.json().catch(() => ({}));
+          msg.textContent = '';
+          if (r.ok) api.toast('Un nouveau mot de passe a été envoyé à l’adresse e-mail de l’administrateur.');
+          else api.toast(d.error || 'Envoi impossible.', true);
+        } catch (err) { msg.textContent = ''; api.toast('Envoi impossible (service indisponible).', true); }
+      };
+      f.append(oublie);
+    }
     const m = modal('Mode administrateur', f);
     no.onclick = m.close; i.focus();
     const entrer = () => { sessionStorage.setItem(SESSION, '1'); api.on = true; m.close(); mount(); api.onChange(); };
@@ -215,6 +247,61 @@ const Admin = (() => {
     };
   };
   api.logout = () => { sessionStorage.removeItem(SESSION); Store.clearAdminPw(); api.on = false; mount(); api.onChange(); };
+
+  /* quitter : si des modifications n'ont pas été sauvegardées, on propose de les sauvegarder ou de les abandonner */
+  api.quit = () => {
+    if (!Store.hasDraft()) return api.logout();
+    const box = el('div', 'adm-confirm'), bar = el('div', 'adm-actions');
+    const txt = el('p', 'adm-confirm-text', 'Des modifications ont été faites et ne sont pas sauvegardées.');
+    box.append(el('span', 'adm-confirm-rune runes', 'ᛉ'), txt);
+    const perdre = el('button', 'adm-btn danger', 'Quitter sans sauvegarder'), garder = el('button', 'adm-btn primary', 'Sauvegarder et quitter');
+    perdre.type = garder.type = 'button'; bar.append(perdre, garder); box.append(bar);
+    const m = modal('Quitter le mode administrateur', box); m.box.classList.add('adm-box-confirm');
+    perdre.onclick = () => { m.close(); Store.discardDraft(); api.logout(); };
+    garder.onclick = async () => {
+      garder.disabled = true; garder.textContent = 'Enregistrement…';
+      if (await Store.save()) { m.close(); api.logout(); } else { garder.disabled = false; garder.textContent = 'Sauvegarder et quitter'; }
+    };
+    garder.focus();
+  };
+
+  /* changer le mot de passe administrateur (vérifié par le serveur) */
+  api.changePassword = () => {
+    const f = el('form', 'adm-form'), msg = el('small', 'adm-hint', '');
+    const champ = (label, auto) => {
+      const row = el('div', 'adm-row'), i = el('input'), err = el('small', 'adm-err', '');
+      i.type = 'password'; i.required = true; i.autocomplete = auto; i.oninput = () => { err.textContent = ''; };
+      row.append(el('span', 'adm-label', label), i, err); f.append(row);
+      i.erreur = t => { err.textContent = t; i.select(); };                // message rouge sous le champ concerné
+      return i;
+    };
+    const ancien = champ('Ancien mot de passe', 'current-password'), nouveau = champ('Nouveau mot de passe', 'new-password'), confirm = champ('Confirmer le nouveau mot de passe', 'new-password');
+    const bar = el('div', 'adm-actions'), ok = el('button', 'adm-btn primary', 'Enregistrer'), no = el('button', 'adm-btn', 'Annuler');
+    ok.type = 'submit'; no.type = 'button'; bar.append(no, ok); f.append(msg, bar);
+    const m = modal('Réinitialiser le mot de passe', f);
+    no.onclick = m.close; ancien.focus();
+    f.onsubmit = async e => {
+      e.preventDefault(); msg.textContent = 'Vérification…';
+      let bon;
+      try { bon = Store.remote ? await Store.checkAdmin(ancien.value) : ancien.value === getPass(); }
+      catch (err) { msg.textContent = 'Connexion au serveur impossible.'; return; }
+      msg.textContent = '';
+      if (!bon) return ancien.erreur('Mauvais mot de passe.');
+      if (nouveau.value.length < 4) return nouveau.erreur('Mot de passe trop court (4 caractères minimum).');
+      if (nouveau.value !== confirm.value) return confirm.erreur('Les deux mots de passe sont différents.');
+      if (Store.remote && !(await Store.changePassword(ancien.value, nouveau.value))) { msg.textContent = ''; return; }
+      if (!Store.remote) localStorage.setItem(PASS, nouveau.value);
+      m.close(); api.toast('Le mot de passe a bien été modifié.');
+    };
+  };
+
+  /* petit message qui disparaît tout seul au bout de 3 secondes */
+  api.toast = (message, erreur) => {
+    const t = el('div', 'adm-toast' + (erreur ? ' error' : ''), ''); t.textContent = message; t.setAttribute('role', 'status');
+    document.body.append(t);
+    setTimeout(() => t.classList.add('out'), 2700);
+    setTimeout(() => t.remove(), 3000);
+  };
 
   /* ---------- export / import ---------- */
   function exporter() {
@@ -249,13 +336,22 @@ const Admin = (() => {
     bar = el('div', 'adm-bar'); bar.id = 'adm-bar';
     bar.innerHTML = '<strong><span class="runes">ᛟ</span> Mode administrateur</strong>';
     const btn = (t, fn, cls) => { const b = el('button', 'adm-btn ' + (cls || ''), t); b.type = 'button'; b.onclick = fn; bar.append(b); };
-    if (Store.remote) bar.append(el('span', 'adm-hint', 'Vos modifications sont publiées automatiquement'));
-    btn(Store.remote ? 'Exporter (sauvegarde)' : 'Exporter pour publier', exporter, Store.remote ? '' : 'primary');
-    btn('Importer', importer);
-    if (!Store.remote) btn('Mot de passe', () => { const p = prompt('Nouveau mot de passe :'); if (p) { localStorage.setItem(PASS, p); alert('Mot de passe modifié.'); } });
-    btn('Tout réinitialiser', () => api.confirm(Store.remote ? 'Effacer TOUT le contenu modifié en ligne et revenir au contenu d’origine du site ?' : 'Effacer toutes vos modifications et revenir au contenu publié ?',
-      () => { Store.resetDraft(); Store.whenSaved().then(api.onChange); }, 'Réinitialiser'));
-    btn('Quitter', api.logout);
+    if (Store.remote) {
+      btn('Sauvegarder', async function () {
+        this.disabled = true; this.textContent = 'Enregistrement…';
+        const ok = await Store.save();
+        this.disabled = false; this.textContent = ok ? 'Sauvegardé ✓' : 'Sauvegarder';
+        if (ok) setTimeout(() => { this.textContent = 'Sauvegarder'; }, 2000);
+      }, 'primary');
+      btn('Réinitialiser le mot de passe', api.changePassword);
+    } else {
+      btn('Exporter pour publier', exporter, 'primary');
+      btn('Importer', importer);
+      btn('Mot de passe', () => { const p = prompt('Nouveau mot de passe :'); if (p) { localStorage.setItem(PASS, p); alert('Mot de passe modifié.'); } });
+    }
+    btn('Tout réinitialiser', () => api.confirmPassword(Store.remote ? 'Effacer TOUT le contenu modifié (en ligne aussi) et revenir au contenu d’origine du site ? Entrez le mot de passe pour confirmer.' : 'Effacer toutes vos modifications et revenir au contenu publié ? Entrez le mot de passe pour confirmer.',
+      async () => { if (await Store.resetAll()) api.onChange(); }, 'Réinitialiser'));
+    btn('Quitter', api.quit);
     document.body.append(bar);
   }
   /* touche Échap : ferme la fenêtre ouverte, sinon quitte le mode administrateur */
@@ -265,7 +361,7 @@ const Admin = (() => {
     if (m) { m.remove(); return; }
     const a = document.activeElement;
     if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) { a.blur(); return; }   // d'abord sortir du champ
-    if (api.on) api.logout();
+    if (api.on) api.quit();
   });
   document.addEventListener('DOMContentLoaded', mount);
   if (document.readyState !== 'loading') mount();
