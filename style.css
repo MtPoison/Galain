@@ -625,3 +625,14 @@ body.admin-on .art-item img { cursor: default; }
 .galerie-more a:hover { color: #8a8a8a; }
 /* barre du haut : pas de soulignement (le texte passe seulement en gris au survol) */
 .nav a, .nav a:hover, .nav a:active, .nav a:focus-visible { text-decoration: none; }
+
+/* bouton « Choisir un fichier » : même style que les autres boutons (contour gris foncé ; survol : fond blanc, texte noir) */
+.adm-form input[type=file]::file-selector-button, .adm-form input[type=file]::-webkit-file-upload-button {
+  font-family: var(--f-head); letter-spacing: .1em; font-size: .78rem; text-transform: uppercase; cursor: pointer;
+  background: #000; color: var(--text); border: 1px solid #4d4d4d; padding: .55rem .9rem; margin-right: .8rem;
+  transition: background .25s, color .25s, border-color .25s;
+}
+.adm-form input[type=file]:hover::file-selector-button, .adm-form input[type=file]:focus-visible::file-selector-button,
+.adm-form input[type=file]:hover::-webkit-file-upload-button, .adm-form input[type=file]:focus-visible::-webkit-file-upload-button {
+  background: #fff; color: #000; border-color: #4d4d4d;
+}

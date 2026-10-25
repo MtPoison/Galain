@@ -47,7 +47,7 @@ SORTIES.push(
 SORTIES.sort((a, b) => b.date.localeCompare(a.date));          // les plus récentes d'abord
 const sortiesParAnnee = () => {
   const m = {};
-  Store.get('years', []).forEach(y => { m[y] = []; });       // années ajoutées par l'administrateur (même vides)
+  if (typeof Admin !== 'undefined' && Admin.on) Store.get('years', []).forEach(y => { m[y] = []; });       // années vides : visibles seulement de l'administrateur (pour y ajouter des sorties), jamais des visiteurs
   SORTIES.forEach(s => (m[s.date.slice(0, 4)] = m[s.date.slice(0, 4)] || []).push(s));
   return m;                                                    // { '2026': [...], '2025': [...], ... }
 };

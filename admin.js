@@ -206,7 +206,9 @@ const Admin = (() => {
         };
         draw(); row.append(list, inp);
       } else {
-        const i = el('input'); i.type = fd.type || 'text'; i.value = vals[fd.name] ?? '';
+        const i = el('input'); i.type = fd.type || 'text';
+        if (fd.min != null) i.min = fd.min; if (fd.max != null) i.max = fd.max; if (fd.step != null) i.step = fd.step;      // curseur (type: 'range') : bornes avant la valeur
+        i.value = vals[fd.name] ?? '';
         if (fd.required) i.required = true; if (fd.placeholder) i.placeholder = fd.placeholder;
         if (fd.lower) i.style.textTransform = 'lowercase';
         i.oninput = () => { vals[fd.name] = fd.lower ? i.value.toLowerCase() : i.value; }; row.append(i);

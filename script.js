@@ -168,9 +168,9 @@ function renderHistoire() {
 function memberForm(list, i) {
   const m = i == null ? {} : list[i];
   Admin.form(i == null ? 'Ajouter un membre' : 'Modifier le membre', [
-    { name: 'surname', label: 'Nom (affiché au survol, toujours en minuscules)', required: true, lower: true },
+    { name: 'surname', label: 'Nom', required: true, lower: true },
     { name: 'portrait', label: 'Portrait', type: 'image', mode: 'portrait', hint: 'Idéal : image sur fond noir ou détourée. Elle est centrée sur un cadre noir 3:4.' },
-    { name: 'bike', label: 'Photo de la moto', type: 'image', mode: 'bike', hint: 'La moto est détourée (fond uni retiré) et centrée sur fond noir. Idéal : photo sur fond uni.' },
+    { name: 'bike', label: 'Photo de la moto', type: 'image', mode: 'bike' },
   ], { surname: m.surname || '', portrait: m.portrait || '', bike: m.bike || '' }, v => {
     if (!v.surname.trim()) return false;
     const nm = { surname: v.surname.trim().toLowerCase(), portrait: v.portrait, bike: v.bike };
@@ -288,7 +288,11 @@ function renderSorties() {
       const wrap = el('div', 'card-wrap'), bar = el('div', 'adm-card-bar');
       bar.append(adminBtn('✎', 'Modifier', () => sortieForm(s, an)),
         adminBtn('✕', 'Supprimer', () => {
-          Admin.confirm(`Supprimer « ${s.title} » ?`, () => { SORTIES.splice(SORTIES.findIndex(x => x.id === s.id), 1); saveSorties(); renderSorties(); });
+          Admin.confirm(`Supprimer « ${s.title} » ?`, () => {
+            SORTIES.splice(SORTIES.findIndex(x => x.id === s.id), 1);
+            if (!SORTIES.some(x => x.date.slice(0, 4) === an)) Store.set('years', Store.get('years', []).filter(y => y !== an));      // dernière sortie de l'année supprimée : l'année disparaît
+            saveSorties(); renderSorties();
+          });
         }, 'danger'));
       wrap.append(card, bar); cartes.append(wrap);
     });
@@ -304,7 +308,7 @@ function allyForm(list, i) {
     { name: 'logo', label: 'Logo', type: 'image', mode: 'logo' },
   ], { name: a.name || '', logo: a.logo || '' }, v => {
     if (!v.name.trim()) return false;
-    const n = { name: v.name.trim(), logo: v.logo, url: a.url || '#' };
+    const n = { name: v.name.trim(), logo: v.logo, url: a.url || '#', blur: a.blur || 0 };
     if (i == null) list.push(n); else list[i] = n;
     if (Store.set('allies', list)) renderAllies(); else return false;
   });
@@ -324,10 +328,12 @@ function renderAllies() {
     link.querySelector('img').src = safeSrc(a.logo); link.querySelector('img').alt = 'Logo ' + a.name;
     link.querySelector('span').textContent = a.name;
     safeImg(link.querySelector('img'), 'ally');
+    const flou = Math.max(0, Math.min(12, Number(a.blur) || 0)); if (flou) link.querySelector('img').style.filter = `blur(${flou}px)`;      // flou choisi par l'administrateur
     if (!A()) { box.append(link); return; }
     link.addEventListener('click', e => e.preventDefault());
     const wrap = el('div', 'ally-wrap'), bar = el('div', 'adm-card-bar');
-    bar.append(adminBtn('✎', 'Modifier', () => allyForm(list, i)),
+    bar.append(adminBtn('◐', a.blur ? 'Retirer le flou du logo' : 'Flouter le logo', () => { list[i].blur = list[i].blur ? 0 : 6; if (Store.set('allies', list)) renderAllies(); }),   // un clic : flou, un autre clic : net
+      adminBtn('✎', 'Modifier', () => allyForm(list, i)),
       adminBtn('✕', 'Retirer ce club', () => {
         Admin.confirm(`Retirer « ${a.name} » ?`, () => { list.splice(i, 1); Store.set('allies', list); renderAllies(); });
       }, 'danger'));
