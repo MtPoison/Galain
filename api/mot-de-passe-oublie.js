@@ -18,20 +18,21 @@ module.exports = async (req, res) => {
     const mdp = lu.ok ? await lu.json() : null;
     if (!mdp) return res.status(409).json({ error: 'Mot de passe non disponible : changez-le une fois depuis le mode administrateur.' });
 
-    /* 2. envoi par e-mail */
+    /* 2. envoi par e-mail (plusieurs adresses possibles, séparées par des virgules ; guillemets et espaces retirés) */
+    const destinataires = ADMIN_EMAIL.split(/[,;\s]+/).map(a => a.replace(/["']/g, '').toLowerCase()).filter(Boolean);
     const mail = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'Galian MCP <onboarding@resend.dev>',
-        to: ADMIN_EMAIL.split(',').map(a => a.trim()).filter(Boolean),     // plusieurs adresses possibles, séparées par des virgules
+        to: destinataires,
         subject: 'Galian MCP – mot de passe administrateur',
         text: 'Votre mot de passe administrateur : ' + mdp,
       }),
     });
     if (!mail.ok) {
       const d = await mail.json().catch(() => ({}));                // raison donnée par Resend (ne contient pas de clé)
-      return res.status(502).json({ error: 'Envoi de l’e-mail impossible' + (d.message ? ' : ' + d.message : '.') });
+      return res.status(502).json({ error: 'Envoi de l’e-mail impossible' + (d.message ? ' : ' + d.message : '.') + ' [' + destinataires.length + ' adresse(s) : ' + destinataires.map(a => a.replace(/^(.{2}).*(@.*)$/, '$1***$2')).join(', ') + ']' });
     }
 
     return res.status(200).json({ ok: true });
