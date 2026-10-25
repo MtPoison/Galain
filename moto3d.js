@@ -5,14 +5,21 @@
    ========================================================== */
 (() => {
   const hero = document.querySelector('.hero');
+  /* à chaque arrivée ou refresh : retour en haut de page, l'image du début reste fixe et l'intro rejoue depuis le début.
+     Safari iPhone restaure la position de défilement APRÈS le chargement : on remet donc en haut plusieurs fois, et sur un refresh on retire l'ancre (#...) */
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+  if (nav && nav.type === 'reload' && location.hash) history.replaceState(null, '', location.pathname + location.search);
+  const enHaut = () => { if (!location.hash) scrollTo(0, 0); };
+  enHaut();
+  addEventListener('load', () => { enHaut(); setTimeout(enHaut, 50); setTimeout(enHaut, 300); });
+  addEventListener('pageshow', enHaut);
+
   const canvas = document.getElementById('hero3d');
   const logo = hero.querySelector('.hero-logo');
   const fail = () => hero.classList.add('no-webgl');
   if (!window.THREE) return fail();
 
-  /* à chaque arrivée ou refresh : retour en haut de page et l'intro rejoue depuis le début */
-  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  if (!location.hash) scrollTo(0, 0);
 
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); } catch (e) { return fail(); }
