@@ -17,8 +17,8 @@ const Admin = (() => {
      2. le dessin est centré, à la même taille pour tous (grande dimension = 65 % de la largeur)
      3. un dessin sombre reçoit un fin contour blanc pour rester visible sur le noir
      Une vraie photo (fond non uni) est seulement centrée sur le cadre noir. */
-  function portraitCanvas(img) {
-    const CW = 600, CH = 800, TARGET = CW * 0.65;
+  function portraitCanvas(img, CW = 600, CH = 800, contain = false) {
+    const TARGET = CW * 0.65;
     const out = document.createElement('canvas'); out.width = CW; out.height = CH;
     const o = out.getContext('2d'); o.fillStyle = '#000'; o.fillRect(0, 0, CW, CH);
     o.imageSmoothingQuality = 'high';
@@ -72,7 +72,7 @@ const Admin = (() => {
     }
     if (cnt < 50) return fit();
     sg.putImageData(d, 0, 0);
-    const bw = x1 - x0 + 1, bh = y1 - y0 + 1, s = TARGET / Math.max(bw, bh);
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1, s = contain ? Math.min(CW * 0.86 / bw, CH * 0.86 / bh) : TARGET / Math.max(bw, bh);
     const dw = bw * s, dh = bh * s, dx = (CW - dw) / 2, dy = (CH - dh) / 2;
 
     if (lum / cnt < 90) {                              // dessin sombre : contour blanc tout autour
@@ -95,10 +95,8 @@ const Admin = (() => {
       let w = img.width, h = img.height, c = document.createElement('canvas'), g;
       if (mode === 'portrait') {                       // détourage + fond noir + taille unifiée (voir portraitCanvas)
         c = portraitCanvas(img);
-      } else if (mode === 'bike') {                    // 16:10, recadrée
-        c.width = 800; c.height = 500; g = c.getContext('2d');
-        const s = Math.max(800 / w, 500 / h);
-        g.drawImage(img, (800 - w * s) / 2, (500 - h * s) / 2, w * s, h * s);
+      } else if (mode === 'bike') {                    // moto détourée (fond uni retiré), centrée sur fond noir 16:10
+        c = portraitCanvas(img, 800, 500, true);
       } else {                                         // photo ou logo : réduite
         const max = mode === 'logo' ? 260 : 1000, s = Math.min(1, max / Math.max(w, h));
         c.width = Math.round(w * s); c.height = Math.round(h * s); g = c.getContext('2d');

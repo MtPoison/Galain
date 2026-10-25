@@ -170,7 +170,7 @@ function memberForm(list, i) {
   Admin.form(i == null ? 'Ajouter un membre' : 'Modifier le membre', [
     { name: 'surname', label: 'Nom (affiché au survol, toujours en minuscules)', required: true, lower: true },
     { name: 'portrait', label: 'Portrait', type: 'image', mode: 'portrait', hint: 'Idéal : image sur fond noir ou détourée. Elle est centrée sur un cadre noir 3:4.' },
-    { name: 'bike', label: 'Photo de la moto', type: 'image', mode: 'bike' },
+    { name: 'bike', label: 'Photo de la moto', type: 'image', mode: 'bike', hint: 'La moto est détourée (fond uni retiré) et centrée sur fond noir. Idéal : photo sur fond uni.' },
   ], { surname: m.surname || '', portrait: m.portrait || '', bike: m.bike || '' }, v => {
     if (!v.surname.trim()) return false;
     const nm = { surname: v.surname.trim().toLowerCase(), portrait: v.portrait, bike: v.bike };

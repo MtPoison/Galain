@@ -35,7 +35,7 @@
       if (evs) {
         el.type = 'button';
         el.setAttribute('aria-label', `${d} ${MOIS[month]} : ${evs.map(e => e.title).join(', ')}`);
-        el.insertAdjacentHTML('beforeend', `<i class="rune">${esc(EVENT_RUNES[evs[0].type] || 'ᛟ')}</i>`);
+        el.insertAdjacentHTML('beforeend', `<i class="rune">●</i>`);
         el.addEventListener('click', () => select(key));
       }
       grid.appendChild(el);
@@ -46,7 +46,7 @@
     const art = document.createElement('article');
     art.className = 'event';
     art.innerHTML = `
-      <span class="rune ev-rune">${esc(EVENT_RUNES[e.type] || 'ᛟ')}</span>
+      <span class="rune ev-rune">●</span>
       <div><h4>${esc(e.title)}</h4>
       <p class="ev-meta">${esc(fmtDate(e.date))} ·${esc(e.time)} · ${esc(e.type)}</p>
       <p class="ev-meta">${esc(e.place)}</p>
@@ -80,7 +80,7 @@
   function renderUpcoming() {
     upcomingEl.innerHTML = upcoming.slice(0, 5).map(e => `
       <li><button type="button" data-date="${esc(e.date)}">
-        <span class="rune">${esc(EVENT_RUNES[e.type] || 'ᛟ')}</span>
+        <span class="rune">●</span>
         <span class="up-date">${esc(fmtDate(e.date))}</span>
         <span class="up-title">${esc(e.title)}</span>
       </button></li>`).join('') || '<li class="muted-note">Aucun événement à venir.</li>';

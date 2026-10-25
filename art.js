@@ -75,15 +75,18 @@ function galerieForm(list, i, done) {
 function holdDrag(item, box, sel, axis, onEnd, opts = {}) {
   if (item._hold) return; item._hold = true;
   const HOLD = 350, MOVE = 8;
-  let timer = null, active = false, sx = 0, sy = 0, pid = null;
+  let timer = null, active = false, sx = 0, sy = 0, pid = null, swapped = false;
   const block = e => e.preventDefault();
   const cancel = () => { clearTimeout(timer); timer = null; };
   const move = e => {
     const el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest(sel);
+    if (el && el.closest(sel) === item) swapped = false;
     if (!t || t === item || t.parentElement !== box) return;
-    const r = t.getBoundingClientRect();
-    const avant = axis === 'x' ? e.clientX < r.left + r.width / 2 : e.clientY < r.top + r.height / 2;
-    box.insertBefore(item, avant ? t : t.nextSibling);
+    /* on intervertit toujours l'objet déplacé avec celui sur lequel on le dépose */
+    if (swapped) return;                                      // une seule inversion tant que le pointeur n'est pas revenu sur l'objet déplacé (évite le clignotement)
+    const repere = document.createElement('span');
+    t.replaceWith(repere); item.replaceWith(t); repere.replaceWith(item);
+    swapped = true;
   };
   const end = () => {
     document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', end);
@@ -93,7 +96,7 @@ function holdDrag(item, box, sel, axis, onEnd, opts = {}) {
     onEnd();
   };
   const start = () => {
-    timer = null; active = true;
+    timer = null; active = true; swapped = false;
     item.classList.add('dragging-item'); document.body.classList.add('is-dragging');
     try { item.setPointerCapture(pid); } catch (e) {}
     if (navigator.vibrate) navigator.vibrate(15);

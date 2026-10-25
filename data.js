@@ -98,7 +98,7 @@ function makeSortieCard(s) {
         </div>
       </div>
       <p class="card-meta"><span class="runes">ᛗ</span> ${esc(s.place)} &nbsp; <span class="runes">ᚱ</span> ${esc(s.km)}</p>
-      <span class="card-more">Lire la saga <span class="runes">ᚨ</span></span>
+      <span class="card-more">Lire la saga</span>
     </div>`;
   el.querySelector('.star').addEventListener('click', e => {
     if (typeof Admin === 'undefined' || !Admin.on) return;                     // seul l'administrateur peut liker
