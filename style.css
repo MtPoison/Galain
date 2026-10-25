@@ -587,3 +587,22 @@ html { background: #000; }
 .page::before, body:has(#embers)::before { visibility: hidden; }          /* le grain reste visible sur les autres pages (sans script.js) */
 html.deja-defile .page::before, html.deja-defile body:has(#embers)::before { visibility: visible; }
 html.tire #embers { visibility: hidden; }   /* pendant le « tirer pour rafraîchir » (page tirée vers le bas) : rien que du noir */
+
+/* ---------- MENU HAMBURGER (mobile) ---------- */
+.nav-toggle { display: none; }
+@media (max-width: 700px) {
+  .nav { justify-content: flex-start; gap: 1.4rem 1.2rem; padding: .9rem 3.4rem .9rem 1rem; max-height: 3.1rem; overflow: hidden; }   /* une seule ligne visible */
+  .nav a { font-size: .78rem; letter-spacing: .14em; }
+  .nav.open { max-height: 80vh; overflow-y: auto; }                                                                                     /* menu ouvert : toutes les rubriques */
+  .nav-toggle {
+    display: flex; flex-direction: column; justify-content: center; gap: 5px;
+    position: absolute; top: 0; right: 0; width: 3.1rem; height: 3.1rem; padding: 0 .85rem;
+    background: rgba(0,0,0,.92); border: 0; border-left: 1px solid var(--gold-soft); cursor: pointer;
+  }
+  .nav-toggle span { display: block; height: 2px; background: var(--gold); transition: transform .25s, opacity .2s; }
+  .nav.open .nav-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav.open .nav-toggle span:nth-child(2) { opacity: 0; }
+  .nav.open .nav-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+}
+.art-item img { cursor: zoom-in; }
+body.admin-on .art-item img { cursor: default; }

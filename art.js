@@ -126,3 +126,32 @@ function makeHandle() {
   return b;
 }
 const HANDLE = { grip: '.adm-handle', hold: 60 };
+
+/* ---------- image en grand (motos, œuvres de la galerie) ----------
+   Fond noir ; on ferme avec la croix, Échap ou un clic à côté de l'image. */
+const ImageBox = (() => {
+  let box, img;
+  const close = () => { box.classList.remove('open'); box.setAttribute('aria-hidden', 'true'); };
+  const build = () => {
+    box = document.createElement('div');
+    box.className = 'lightbox moto-box'; box.setAttribute('aria-hidden', 'true');
+    box.innerHTML = '<button type="button" class="lb-close" aria-label="Fermer">✕</button><img alt="">';
+    document.body.append(box); img = box.querySelector('img');
+    box.addEventListener('click', e => { if (e.target !== img) close(); });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && box.classList.contains('open')) close(); });
+  };
+  return {
+    open(src, alt) {
+      if (!box) build();
+      img.alt = alt || ''; img.src = safeSrc(src);
+      box.classList.add('open'); box.setAttribute('aria-hidden', 'false');
+    },
+  };
+})();
+
+/* clic sur une œuvre de la galerie (hors mode administrateur) : elle s'ouvre en grand */
+document.addEventListener('click', e => {
+  const im = e.target.closest('.art-item img');
+  if (!im || (typeof Admin !== 'undefined' && Admin.on)) return;
+  ImageBox.open(im.getAttribute('src'), im.alt);
+});
