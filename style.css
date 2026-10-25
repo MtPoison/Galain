@@ -638,3 +638,6 @@ body.admin-on .art-item img { cursor: default; }
 }
 .s-main { position: relative; }
 .adm-main-pencil { position: absolute; top: .6rem; right: .6rem; z-index: 5; }
+
+/* glisser-déposer d'images (mode administrateur) */
+.adm-drop-over { outline: 2px dashed var(--gold); outline-offset: 4px; background: rgba(212, 175, 55, .08); }

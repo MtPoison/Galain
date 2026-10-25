@@ -42,6 +42,13 @@
       });
     });
     principale.append(changer);                          // crayon posé sur l'image elle-même
+    Admin.dropFiles(principale, async files => {         // photo glissée sur l'image principale : elle la remplace
+      try {
+        s.images[0] = await Admin.processImage(files[0], 'photo');
+        if (!Store.set('sorties', SORTIES)) return;
+        const im = principale.querySelector('img'); im.onerror = null; im.src = safeSrc(s.images[0]);
+      } catch (e) { alert(e.message); }
+    });
   }
 
   /* mode administrateur : pas de carrousel, les photos secondaires sont empilées par ligne de trois et se déplacent à la poignée */
@@ -63,19 +70,32 @@
       }, HANDLE);
     });
     const add = document.createElement('button'); add.type = 'button'; add.className = 'adm-add adm-img-add'; add.textContent = '＋ Ajouter une photo';
-    add.addEventListener('click', () => Admin.form('Ajouter une photo', [
-      { name: 'img', label: 'Photo du carrousel', type: 'image', mode: 'photo' },
-    ], { img: '' }, v => {
-      if (!v.img) return false;
-      s.images.push(v.img);
-      if (Store.set('sorties', SORTIES)) adminGrid(); else return false;
-    }));
+    /* sélection de plusieurs photos d'un coup : elles rejoignent directement le carrousel */
+    const pick = document.createElement('input'); pick.type = 'file'; pick.accept = 'image/*'; pick.multiple = true; pick.hidden = true;
+    add.addEventListener('click', () => pick.click());
+    const ajouter = async files => {
+      if (!files.length) return;
+      add.disabled = true; add.textContent = 'Ajout en cours…';
+      const ajoutees = [];
+      for (const f of files) {
+        try { ajoutees.push(await Admin.processImage(f, 'photo')); } catch (e) { alert(`${f.name} : ${e.message}`); }
+      }
+      if (ajoutees.length) {
+        s.images.push(...ajoutees);
+        if (!Store.set('sorties', SORTIES)) s.images.splice(s.images.length - ajoutees.length, ajoutees.length);
+      }
+      adminGrid();
+    };
+    pick.addEventListener('change', () => { const files = [...pick.files]; pick.value = ''; ajouter(files); });
+    car2.ajouterPhotos = ajouter;                              // cible du glisser-déposer (branché une seule fois, plus bas)
+    grid.append(pick);
     grid.append(add);
   }
 
   const car = document.getElementById('carousel');
   if (Admin.on) {
     adminGrid();
+    Admin.dropFiles(car, files => car.ajouterPhotos(files));   // photos glissées sur la zone du carrousel
   } else if (autres.length) {
     car.hidden = false;
     car.innerHTML = '<div class="car-view"><div class="car-track"></div></div><button type="button" class="car-btn prev" aria-label="Image précédente">‹</button><button type="button" class="car-btn next" aria-label="Image suivante">›</button>';

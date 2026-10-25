@@ -123,6 +123,24 @@ const Admin = (() => {
     img.src = url;
   });
 
+  /* glisser-déposer : des images lâchées sur `target` sont transmises à `onFiles` (liste de fichiers image) */
+  api.dropFiles = (target, onFiles) => {
+    const has = e => [...(e.dataTransfer?.types || [])].includes('Files');
+    let depth = 0;
+    target.addEventListener('dragenter', e => { if (!has(e)) return; e.preventDefault(); depth++; target.classList.add('adm-drop-over'); });
+    target.addEventListener('dragover', e => { if (!has(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    target.addEventListener('dragleave', e => { if (!has(e)) return; if (--depth <= 0) { depth = 0; target.classList.remove('adm-drop-over'); } });
+    target.addEventListener('drop', e => {
+      if (!has(e)) return;
+      e.preventDefault(); e.stopPropagation(); depth = 0; target.classList.remove('adm-drop-over');
+      const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+      if (files.length) onFiles(files);
+    });
+  };
+  /* un fichier lâché à côté d'une zone de dépôt ne doit pas faire quitter la page */
+  addEventListener('dragover', e => { if ([...(e.dataTransfer?.types || [])].includes('Files')) e.preventDefault(); });
+  addEventListener('drop', e => { if ([...(e.dataTransfer?.types || [])].includes('Files')) e.preventDefault(); });
+
   /* ---------- fenêtre modale ---------- */
   function modal(title, content) {
     const back = el('div', 'adm-modal'), box = el('div', 'adm-box');
@@ -181,12 +199,13 @@ const Admin = (() => {
         const inp = el('input'); inp.type = 'file'; inp.accept = 'image/*';
         const rm = el('button', 'adm-btn', 'Supprimer l’image'); rm.type = 'button'; rm.hidden = !vals[fd.name];
         rm.onclick = () => { vals[fd.name] = ''; prev.hidden = true; rm.hidden = true; inp.value = ''; };       // retire l’image choisie (on peut en choisir une autre)
-        inp.onchange = async () => {
-          if (!inp.files[0]) return;
-          try { vals[fd.name] = await api.processImage(inp.files[0], fd.mode); prev.src = safeSrc(vals[fd.name]); prev.hidden = false; rm.hidden = false; }
+        const take = async file => {
+          try { vals[fd.name] = await api.processImage(file, fd.mode); prev.src = safeSrc(vals[fd.name]); prev.hidden = false; rm.hidden = false; }
           catch (e) { alert(e.message); }
         };
-        row.append(prev, rm, inp);
+        inp.onchange = () => { if (inp.files[0]) take(inp.files[0]); };
+        api.dropFiles(row, files => take(files[0]));
+        row.append(prev, rm, inp, el('small', 'adm-hint', 'ou glissez une image ici'));
       } else if (fd.type === 'images') {
         vals[fd.name] = (vals[fd.name] || []).slice();
         const list = el('div', 'adm-thumbs'), inp = el('input');
@@ -200,13 +219,15 @@ const Admin = (() => {
             t.append(im, x); list.append(t);
           });
         };
-        inp.onchange = async () => {
-          for (const file of inp.files) {
+        const take = async files => {
+          for (const file of files) {
             try { vals[fd.name].push(await api.processImage(file, fd.mode || 'photo')); } catch (e) { alert(e.message); }
           }
-          inp.value = ''; draw();
+          draw();
         };
-        draw(); row.append(list, inp);
+        inp.onchange = async () => { const fl = [...inp.files]; inp.value = ''; await take(fl); };
+        api.dropFiles(row, take);
+        draw(); row.append(list, inp, el('small', 'adm-hint', 'ou glissez des images ici'));
       } else {
         const i = el('input'); i.type = fd.type || 'text';
         if (fd.min != null) i.min = fd.min; if (fd.max != null) i.max = fd.max; if (fd.step != null) i.step = fd.step;      // curseur (type: 'range') : bornes avant la valeur
