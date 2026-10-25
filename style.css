@@ -580,8 +580,9 @@ body.is-dragging, body.is-dragging * { user-select: none; -webkit-user-select: n
 * { -webkit-tap-highlight-color: transparent; }
 a, button, .card, .thumb, .star, .cal-nav, .day { -webkit-tap-highlight-color: rgba(0, 0, 0, 0); outline-offset: 2px; }
 
-/* en haut de page la bannière couvre tout l'écran : le fond « viking » est masqué, pour que le tirer-pour-rafraîchir (qui décale la page) montre du noir et non l'image */
+
+/* Fond viking, braises et grain : cachés PAR DÉFAUT, affichés seulement une fois la page défilée (classe .deja-defile posée par script.js).
+   Au chargement, au refresh et quand on tire la page en haut (iPhone), on ne voit donc que du noir. */
 html { background: #000; }
-html.au-sommet .page::before { opacity: 0; }
-/* en haut de page (refresh, tirer la page) : fond noir pur, sans les braises ni le grain */
-html.au-sommet #embers, html.au-sommet body::before { display: none; }
+.page::before, #embers, body:has(#embers)::before { visibility: hidden; }          /* le grain reste visible sur les autres pages (sans script.js) */
+html.deja-defile .page::before, html.deja-defile #embers, html.deja-defile body:has(#embers)::before { visibility: visible; }
