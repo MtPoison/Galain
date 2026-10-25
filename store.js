@@ -114,12 +114,50 @@ const Store = (() => {
     async upload(blob, ext) {
       if (!REMOTE) return null;
       const name = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)) + '.' + ext;
+      this.uploadError = '';
       try {
         const r = await fetch(SUPABASE_URL + '/storage/v1/object/photos/' + name, {
           method: 'POST', headers: { apikey: SUPABASE_KEY, 'Content-Type': blob.type, 'x-upsert': 'false' }, body: blob,
         });
-        return r.ok ? SUPABASE_URL + '/storage/v1/object/public/photos/' + name : null;
-      } catch (e) { return null; }
+        if (r.ok) return SUPABASE_URL + '/storage/v1/object/public/photos/' + name;
+        this.uploadError = (await r.json().catch(() => ({}))).message || r.statusText || ('erreur ' + r.status);
+      } catch (e) { this.uploadError = e.message || 'réseau'; }
+      return null;
+    },
+    /* envoie toutes les images intégrées (data:image…) du contenu dans le stockage et les remplace par leur adresse ;
+       le résultat est placé dans le brouillon (à publier avec « Sauvegarder »). Renvoie { n, erreur } */
+    async migrateImages(progress) {
+      const all = clone(Object.assign({}, published, base(), adminOn() ? draft : {})), cache = new Map();
+      const isData = v => typeof v === 'string' && /^data:image\/(png|jpe?g|webp);/i.test(v);
+      let n = 0, total = 0, erreur = '';
+      const count = v => { if (isData(v)) total++; else if (v && typeof v === 'object') Object.values(v).forEach(count); };
+      const walk = async v => {
+        if (isData(v)) {
+          if (!cache.has(v)) {
+            const [tete, b64] = v.split(','), mime = tete.slice(5).split(';')[0];      // fetch(data:…) est bloqué par la politique de sécurité : décodage à la main
+            const octets = Uint8Array.from(atob(b64), ch => ch.charCodeAt(0)), blob = new Blob([octets], { type: mime });
+            const lien = await this.upload(blob, blob.type === 'image/png' ? 'png' : 'jpg');
+            if (!lien) { erreur = this.uploadError; throw new Error(erreur); }
+            cache.set(v, lien); n++; if (progress) progress(n, total);
+          }
+          return cache.get(v);
+        }
+        if (Array.isArray(v)) { for (let i = 0; i < v.length; i++) v[i] = await walk(v[i]); }
+        else if (v && typeof v === 'object') { for (const k of Object.keys(v)) v[k] = await walk(v[k]); }
+        return v;
+      };
+      Object.values(all).forEach(count);
+      const changed = {};
+      try {
+        for (const k of Object.keys(all)) {
+          const avant = JSON.stringify(all[k]);
+          if (!/data:image\//.test(avant)) continue;
+          changed[k] = await walk(all[k]);
+        }
+      } catch (e) { /* erreur déjà notée : on garde ce qui a pu être migré */ }
+      Object.assign(draft, changed);
+      if (Object.keys(changed).length && !persist()) return { n, erreur: erreur || 'stockage du navigateur plein' };
+      return { n, erreur };
     },
     /* efface tout : le brouillon et, en ligne, le contenu publié */
     async resetAll() {

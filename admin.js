@@ -122,6 +122,7 @@ const Admin = (() => {
       const png = mode === 'logo', type = png ? 'image/png' : 'image/jpeg';
       c.toBlob(async blob => {
         const lien = blob && Store.remote ? await Store.upload(blob, png ? 'png' : 'jpg') : null;
+        if (!lien && Store.remote && blob) api.toast('Envoi vers Supabase impossible (' + (Store.uploadError || 'inconnu') + ') : photo gardée dans le navigateur.', true);
         resolve(lien || c.toDataURL(type, 0.72));
       }, type, 0.72);
     };
@@ -386,6 +387,14 @@ const Admin = (() => {
         this.disabled = false; this.textContent = ok ? 'Sauvegardé ✓' : 'Sauvegarder';
         if (ok) setTimeout(api.recharger, 500);                       // modifications publiées : le site se recharge tout seul pour les afficher
       }, 'primary');
+      btn('Migrer les images', async function () {
+        this.disabled = true; this.textContent = 'Migration…';
+        const r = await Store.migrateImages((n, t) => { this.textContent = `Migration ${n}/${t}…`; });
+        this.disabled = false; this.textContent = 'Migrer les images';
+        if (r.erreur) alert('Migration interrompue (' + r.erreur + '). ' + r.n + ' image(s) déjà migrée(s). Vérifiez que le script SQL du bucket « photos » a été exécuté.');
+        else if (!r.n) api.toast('Aucune image à migrer.');
+        else { api.toast(r.n + ' image(s) migrée(s). Cliquez sur Sauvegarder pour publier.'); setTimeout(() => location.reload(), 1200); }
+      });
       btn('Réinitialiser le mot de passe', api.changePassword);
     } else {
       btn('Exporter pour publier', exporter, 'primary');
