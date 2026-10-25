@@ -31,7 +31,7 @@ function makeArtItem(g) {
   fig.style.flex = `0 1 ${GALERIE_H}px`;
   img.addEventListener('load', setRatio);
   img.addEventListener('error', () => { img.onerror = null; img.src = PHOTO_FALLBACK; setRatio(); }, { once: true });
-  img.src = g.img;
+  img.src = safeSrc(g.img);
   fig.append(img);
   return fig;
 }

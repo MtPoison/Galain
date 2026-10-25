@@ -165,11 +165,11 @@ const Admin = (() => {
         s.value = vals[fd.name] || fd.options[0]; vals[fd.name] = s.value;
         s.onchange = () => { vals[fd.name] = s.value; }; row.append(s);
       } else if (fd.type === 'image') {
-        const prev = el('img', 'adm-prev'); prev.alt = ''; if (vals[fd.name]) prev.src = vals[fd.name]; else prev.hidden = true;
+        const prev = el('img', 'adm-prev'); prev.alt = ''; if (vals[fd.name]) prev.src = safeSrc(vals[fd.name]); else prev.hidden = true;
         const inp = el('input'); inp.type = 'file'; inp.accept = 'image/*';
         inp.onchange = async () => {
           if (!inp.files[0]) return;
-          try { vals[fd.name] = await api.processImage(inp.files[0], fd.mode); prev.src = vals[fd.name]; prev.hidden = false; }
+          try { vals[fd.name] = await api.processImage(inp.files[0], fd.mode); prev.src = safeSrc(vals[fd.name]); prev.hidden = false; }
           catch (e) { alert(e.message); }
         };
         row.append(prev, inp);
@@ -181,7 +181,7 @@ const Admin = (() => {
           list.innerHTML = '';
           vals[fd.name].forEach((src, i) => {
             const t = el('div', 'adm-thumb'), im = el('img'), x = el('button', 'adm-x', '✕');
-            im.src = src; im.onerror = () => { im.onerror = null; im.src = PHOTO_FALLBACK; };
+            im.src = safeSrc(src); im.onerror = () => { im.onerror = null; im.src = PHOTO_FALLBACK; };
             x.type = 'button'; x.title = 'Retirer cette image'; x.onclick = () => { vals[fd.name].splice(i, 1); draw(); };
             t.append(im, x); list.append(t);
           });
@@ -287,7 +287,7 @@ const Admin = (() => {
       catch (err) { msg.textContent = 'Connexion au serveur impossible.'; return; }
       msg.textContent = '';
       if (!bon) return ancien.erreur('Mauvais mot de passe.');
-      if (nouveau.value.length < 4) return nouveau.erreur('Mot de passe trop court (4 caractères minimum).');
+      if (nouveau.value.length < 8) return nouveau.erreur('Mot de passe trop court (8 caractères minimum).');
       if (nouveau.value !== confirm.value) return confirm.erreur('Les deux mots de passe sont différents.');
       if (Store.remote && !(await Store.changePassword(ancien.value, nouveau.value))) { msg.textContent = ''; return; }
       if (!Store.remote) localStorage.setItem(PASS, nouveau.value);

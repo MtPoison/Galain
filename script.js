@@ -191,10 +191,10 @@ function renderMembers() {
     const art = el('article', 'member');
     art.innerHTML = `
       <div class="portrait">
-        <img src="${m.portrait}" alt="Portrait" loading="lazy" draggable="false">
+        <img src="${esc(safeSrc(m.portrait))}" alt="Portrait" loading="lazy" draggable="false">
         <div class="overlay"><span class="rune-line">ᚦ ᛟ ᚦ</span><span class="surname"></span></div>
       </div>
-      <figure class="bike"><img src="${m.bike}" alt="Moto" loading="lazy"></figure>`;
+      <figure class="bike"><img src="${esc(safeSrc(m.bike))}" alt="Moto" loading="lazy"></figure>`;
     art.querySelector('.surname').textContent = m.surname;
     safeImg(art.querySelector('.portrait img'), 'portrait');
     safeImg(art.querySelector('.bike img'), 'bike');
@@ -262,8 +262,8 @@ function renderSorties() {
   Object.keys(parAnnee).sort((a, b) => b - a).forEach(an => {
     const liste = parAnnee[an], bloc = el('div', 'year-block reveal');
     bloc.innerHTML = `
-      <a class="year-head" href="annee.html?y=${an}" aria-label="Toutes les sorties ${an}">
-        <span class="year-num">${an}</span>
+      <a class="year-head" href="annee.html?y=${encodeURIComponent(an)}" aria-label="Toutes les sorties ${esc(an)}">
+        <span class="year-num">${esc(an)}</span>
         <span class="year-count">${liste.length} sortie${liste.length > 1 ? 's' : ''}</span>
         <span class="year-more">Voir toutes les sorties</span>
       </a>`;
@@ -315,7 +315,7 @@ function renderAllies() {
   list.forEach((a, i) => {
     const link = el('div', 'ally');                       // pas un lien : un clic ne fait rien
     link.innerHTML = '<img alt="" loading="lazy"><span></span>';
-    link.querySelector('img').src = a.logo; link.querySelector('img').alt = 'Logo ' + a.name;
+    link.querySelector('img').src = safeSrc(a.logo); link.querySelector('img').alt = 'Logo ' + a.name;
     link.querySelector('span').textContent = a.name;
     safeImg(link.querySelector('img'), 'ally');
     if (!A()) { box.append(link); return; }

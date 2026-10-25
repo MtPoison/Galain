@@ -13,11 +13,11 @@
   const an = s.date.slice(0, 4), backYear = document.getElementById('back-year');
   backYear.href = `annee.html?y=${an}`; backYear.textContent = `Retour aux sorties ${an}`;
 
-  const img = (src, alt) => { const i = new Image(); i.alt = alt; i.loading = 'lazy'; i.src = src; i.addEventListener('error', () => { i.onerror = null; i.src = PHOTO_FALLBACK; }, { once: true }); return i; };
+  const img = (src, alt) => { const i = new Image(); i.alt = alt; i.loading = 'lazy'; i.src = safeSrc(src); i.addEventListener('error', () => { i.onerror = null; i.src = PHOTO_FALLBACK; }, { once: true }); return i; };
 
   main.querySelector('.s-date').textContent = fmtDate(s.date);
   main.querySelector('h1').textContent = s.title;
-  main.querySelector('.s-meta').innerHTML = `<span>ᛗ ${s.place}</span><span>ᚱ ${s.km}</span><span>ᚹ ${s.riders} motards</span>`;
+  main.querySelector('.s-meta').innerHTML = `<span>ᛗ ${esc(s.place)}</span><span>ᚱ ${esc(s.km)}</span><span>ᚹ ${Number(s.riders) || 0} motards</span>`;
 
   /* image principale : la première photo ; les suivantes forment un carrousel qui boucle */
   const [premiere, ...autres] = s.images;
@@ -114,7 +114,7 @@
   function renderText() {
     text.innerHTML = '';
     if (!Admin.on) {
-      s.text.filter(p => p.trim()).forEach((p, i) => { const el = document.createElement('p'); if (i === 0) el.innerHTML = `<span class="drop">${p[0]}</span>${p.slice(1)}`; else el.textContent = p; text.appendChild(el); });
+      s.text.filter(p => p.trim()).forEach((p, i) => { const el = document.createElement('p'); if (i === 0) { const drop = document.createElement('span'); drop.className = 'drop'; drop.textContent = p[0]; el.append(drop, p.slice(1)); } else el.textContent = p; text.appendChild(el); });
       return;
     }
     const mk = Admin.el, fi = focusIdx; focusIdx = null; let focusNode = null;
@@ -167,7 +167,7 @@
   function lbShow(n) {
     lbIdx = (n + lbList.length) % lbList.length;
     boxImg.onerror = () => { boxImg.onerror = null; boxImg.src = PHOTO_FALLBACK; };
-    boxImg.src = lbList[lbIdx]; boxImg.alt = `${s.title} – photo`;
+    boxImg.src = safeSrc(lbList[lbIdx]); boxImg.alt = `${s.title} – photo`;
     lbPrev.hidden = lbNext.hidden = lbList.length < 2;
     box.querySelector('.lb-count').textContent = lbList.length > 1 ? `${lbIdx + 1} / ${lbList.length}` : '';
   }

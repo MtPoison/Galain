@@ -29,5 +29,5 @@
 
   /* liens vers les autres années */
   main.querySelector('.year-links').innerHTML = annees
-    .map(a => `<a href="annee.html?y=${a}" class="${a === an ? 'current' : ''}">${a}</a>`).join('');
+    .map(a => `<a href="annee.html?y=${encodeURIComponent(a)}" class="${a === an ? 'current' : ''}">${esc(a)}</a>`).join('');
 })();

@@ -86,18 +86,18 @@ function toggleLike(id) {
 function makeSortieCard(s) {
   const el = document.createElement('a');
   el.className = 'card';
-  el.href = `sortie.html?id=${s.id}`;
+  el.href = `sortie.html?id=${encodeURIComponent(s.id)}`;
   el.innerHTML = `
-    <div class="card-img"><img src="${s.images[0]}" alt="${s.title}" loading="lazy"><span class="card-date">${fmtDate(s.date)}</span></div>
+    <div class="card-img"><img src="${esc(safeSrc(s.images[0]))}" alt="${esc(s.title)}" loading="lazy"><span class="card-date">${esc(fmtDate(s.date))}</span></div>
     <div class="card-body">
-      <div class="card-title"><h3>${s.title}</h3>
+      <div class="card-title"><h3>${esc(s.title)}</h3>
         <div class="card-actions">
-          <span class="star${estLike(s.id) ? ' liked' : ''}" data-id="${s.id}" role="img" aria-label="Sortie à la une"><svg viewBox="0 0 24 24"><path d="M12 2.500l2.900 6.100 6.600.8-4.900 4.600 1.300 6.600L12 17.300 6.100 20.600l1.300-6.600L2.500 9.400l6.600-.8z"/></svg></span>
-          <span class="thumb-count" data-id="${s.id}">${nbPouces(s.id)}</span>
-          <button type="button" class="thumb${aPouce(s.id) ? ' liked' : ''}" data-id="${s.id}" aria-label="J’aime cette sortie"><svg viewBox="0 0 24 24"><path d="M1 21h4V9H1zm22-11a2 2 0 0 0-2-2h-6.300l.9-4.600v-.3a1.500 1.500 0 0 0-.4-1.100L14.200 1 7.600 7.600A2 2 0 0 0 7 9v10a2 2 0 0 0 2 2h9a2 2 0 0 0 1.800-1.200l3-7a2 2 0 0 0 .2-.8z"/></svg></button>
+          <span class="star${estLike(s.id) ? ' liked' : ''}" data-id="${esc(s.id)}" role="img" aria-label="Sortie à la une"><svg viewBox="0 0 24 24"><path d="M12 2.500l2.900 6.100 6.600.8-4.900 4.600 1.300 6.600L12 17.300 6.100 20.600l1.300-6.600L2.500 9.400l6.600-.8z"/></svg></span>
+          <span class="thumb-count" data-id="${esc(s.id)}">${nbPouces(s.id)}</span>
+          <button type="button" class="thumb${aPouce(s.id) ? ' liked' : ''}" data-id="${esc(s.id)}" aria-label="J’aime cette sortie"><svg viewBox="0 0 24 24"><path d="M1 21h4V9H1zm22-11a2 2 0 0 0-2-2h-6.300l.9-4.600v-.3a1.500 1.500 0 0 0-.4-1.100L14.200 1 7.600 7.600A2 2 0 0 0 7 9v10a2 2 0 0 0 2 2h9a2 2 0 0 0 1.800-1.200l3-7a2 2 0 0 0 .2-.8z"/></svg></button>
         </div>
       </div>
-      <p class="card-meta"><span class="runes">ᛗ</span> ${s.place} &nbsp; <span class="runes">ᚱ</span> ${s.km}</p>
+      <p class="card-meta"><span class="runes">ᛗ</span> ${esc(s.place)} &nbsp; <span class="runes">ᚱ</span> ${esc(s.km)}</p>
       <span class="card-more">Lire la saga <span class="runes">ᚨ</span></span>
     </div>`;
   el.querySelector('.star').addEventListener('click', e => {
@@ -124,7 +124,7 @@ const sbFetch = (path, opts = {}) => fetch(SUPABASE_URL + '/rest/v1/' + path, Ob
 const nbPouces = THUMBS_ON
   ? id => thumbCounts[id] || 0
   : id => ((window.SITE_DATA && SITE_DATA.thumbs && SITE_DATA.thumbs[id]) || 0) + (aPouce(id) ? 1 : 0);
-const majCompteurs = id => document.querySelectorAll(id ? `.thumb-count[data-id="${id}"]` : '.thumb-count').forEach(c => { c.textContent = nbPouces(c.dataset.id); });
+const majCompteurs = id => document.querySelectorAll(id ? `.thumb-count[data-id="${CSS.escape(id)}"]` : '.thumb-count').forEach(c => { c.textContent = nbPouces(c.dataset.id); });
 if (THUMBS_ON) {
   sbFetch('thumbs?select=sortie_id,count').then(r => r.json())
     .then(rows => { rows.forEach(r => { thumbCounts[r.sortie_id] = r.count; }); majCompteurs(); }).catch(() => {});
@@ -133,7 +133,7 @@ function togglePouce(id) {
   const l = mesPouces(), i = l.indexOf(id), delta = i < 0 ? 1 : -1;
   if (i < 0) l.push(id); else l.splice(i, 1);
   try { localStorage.setItem(THUMB_KEY, JSON.stringify(l)); } catch (e) {}
-  document.querySelectorAll(`.thumb[data-id="${id}"]`).forEach(b => b.classList.toggle('liked', i < 0));
+  document.querySelectorAll(`.thumb[data-id="${CSS.escape(id)}"]`).forEach(b => b.classList.toggle('liked', i < 0));
   if (THUMBS_ON) {
     thumbCounts[id] = Math.max(0, (thumbCounts[id] || 0) + delta);                 // affichage immédiat, puis envoi au serveur
     sbFetch('rpc/toggle_thumb', { method: 'POST', body: JSON.stringify({ p_id: id, p_delta: delta }) })

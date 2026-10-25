@@ -133,7 +133,7 @@ Vercel → projet → **Settings → Environment Variables**, ajoutez :
 
 Puis **Deployments → Redeploy**.
 
-## Mot de passe oublié : envoi du mot de passe actuel (5e script)
+## (OBSOLÈTE – ne plus utiliser, remplacé par SECURITY.sql) Mot de passe oublié : envoi du mot de passe actuel (5e script)
 
 Le mot de passe est stocké haché (illisible). Pour pouvoir l'envoyer, une copie en clair est gardée dans une colonne que seule la clé secrète (Vercel) peut lire.
 
@@ -160,3 +160,7 @@ end $$;
 revoke execute on function forgot_get(), forgot_mark() from public, anon, authenticated;
 grant execute on function forgot_get(), forgot_mark() to service_role;
 ```
+
+## Sécurité (6e script – à lancer en dernier)
+
+Exécutez le contenu de `SECURITY.sql` (il supprime aussi la copie en clair du mot de passe : « mot de passe oublié » envoie maintenant un mot de passe temporaire) dans **SQL Editor** : blocage après 5 mots de passe faux en 15 minutes, clés de contenu limitées à la liste connue, taille maximale, 8 caractères minimum pour le mot de passe, limitation des pouces. Le site fonctionne avec ou sans ce script, mais le blocage anti force brute n'est actif qu'après son exécution.

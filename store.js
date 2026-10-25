@@ -11,6 +11,16 @@
 const SUPABASE_URL = 'https://hnmlvvmnpmiektatkspu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_4U9ZfZdpriXK4c7Z2JUXnA_p1aWz3cR';
 
+/* Sécurité : tout texte venant des données (Supabase, brouillon, import) passe par esc() avant d'entrer dans un innerHTML,
+   et toute adresse d'image par safeSrc() (refuse javascript:, data:text/html, etc.). Préférer textContent quand c'est possible. */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"'`]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' }[c]));
+const safeSrc = u => {
+  u = String(u == null ? '' : u).trim();
+  if (/^data:image\/(png|jpe?g|webp|gif|svg\+xml)[;,]/i.test(u)) return u;          // images enregistrées par l'administrateur
+  if (/^(https:\/\/|\/(?!\/)|\.\/|[\w][\w\-./ %]*$)/i.test(u) && !/^[a-z][a-z0-9+.-]*:(?!\/\/)/i.test(u)) return u;   // https:// ou chemin relatif du site
+  return 'img/sorties/vide.jpg';
+};
+
 const Store = (() => {
   const KEY = 'galian-site-v1', CACHE = 'galian-remote-v1', PW = 'galian-admin-pw', SESSION = 'galian-admin';
   const REMOTE = !!(SUPABASE_URL && SUPABASE_KEY);
@@ -55,7 +65,10 @@ const Store = (() => {
   const call = async (fn, body, what) => {
     try {
       const r = await rest('rpc/' + fn, body);
-      if (r.ok) return true;
+      if (r.ok) {
+        if (r.status !== 204 && (await r.json().catch(() => null)) === false) throw new Error('mot de passe incorrect ou trop de tentatives');   // le serveur répond false sans lever d'erreur (voir SECURITY.sql)
+        return true;
+      }
       throw new Error((await r.json().catch(() => ({}))).message || r.statusText);
     } catch (e) {
       alert('Enregistrement en ligne impossible (' + what + ') : ' + (e.message || e));
