@@ -223,11 +223,16 @@ h2 {
   transition: transform .35s, border-color .35s, box-shadow .35s, opacity .8s;
 }
 .card::after { content: ''; position: absolute; inset: 6px; border: 1px solid rgba(255,255,255,.12); pointer-events: none; transition: border-color .35s; }
-.card.in:hover, .card:focus-visible { transform: translateY(-8px); border-color: var(--gold); box-shadow: 0 14px 34px rgba(255,255,255,.1); }
-.card:hover::after { border-color: rgba(255,255,255,.45); }
+.card:focus-visible { transform: translateY(-8px); border-color: var(--gold); box-shadow: 0 14px 34px rgba(255,255,255,.1); }
+@media (hover: hover) and (pointer: fine) {
+  .card.in:hover { transform: translateY(-8px); border-color: var(--gold); box-shadow: 0 14px 34px rgba(255,255,255,.1); }
+  .card:hover::after { border-color: rgba(255,255,255,.45); }
+  .card:hover .card-img img { transform: scale(1.08); filter: grayscale(.85); }
+  .card:hover .card-more .runes { transform: translateX(6px); }
+  .card:hover .card-more { color: #8a8a8a; text-decoration: underline; }
+}
 .card-img { position: relative; aspect-ratio: 4 / 3; overflow: hidden; }
 .card-img img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(0) contrast(1.05); transition: transform .6s, filter .6s; }
-.card:hover .card-img img { transform: scale(1.08); filter: grayscale(.85); }
 .card-date {
   position: absolute; left: 0; bottom: 0; padding: .35rem .9rem;
   background: #000; border-top: 1px solid var(--gold-soft); border-right: 1px solid var(--gold-soft);
@@ -239,7 +244,6 @@ h2 {
 .card-meta .runes { letter-spacing: 0; margin-right: .2rem; }
 .card-more { margin-top: auto; padding-top: .6rem; font-family: var(--f-head); font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); }
 .card-more .runes { letter-spacing: 0; display: inline-block; transition: transform .3s; }
-.card:hover .card-more .runes { transform: translateX(6px); }
 
 /* ---------- CALENDRIER ---------- */
 .cal-wrap { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 2rem; text-align: left; align-items: start; }
@@ -619,7 +623,7 @@ body.admin-on .art-item img { cursor: default; }
   text-decoration: underline; text-underline-offset: .3em; text-decoration-thickness: 1px;
   transition: color .25s;
 }
-.nav a:hover, .back:hover, .year-more:hover, .card:hover .card-more, .adm-link:hover, .cal-upcoming button:hover .up-title,
+.nav a:hover, .back:hover, .year-more:hover, .adm-link:hover, .cal-upcoming button:hover .up-title,
 .nav a:active, .back:active, .year-more:active, .card:active .card-more, .adm-link:active, .cal-upcoming button:active .up-title,
 .nav a:focus-visible, .back:focus-visible, .year-more:focus-visible, .adm-link:focus-visible {
   color: #8a8a8a; text-decoration: underline;
