@@ -636,3 +636,5 @@ body.admin-on .art-item img { cursor: default; }
 .adm-form input[type=file]:hover::-webkit-file-upload-button, .adm-form input[type=file]:focus-visible::-webkit-file-upload-button {
   background: #fff; color: #000; border-color: #4d4d4d;
 }
+.s-main { position: relative; }
+.adm-main-pencil { position: absolute; top: .6rem; right: .6rem; z-index: 5; }

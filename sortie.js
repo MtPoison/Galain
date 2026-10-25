@@ -23,7 +23,26 @@
   const [premiere, ...autres] = s.images;
   const principale = main.querySelector('.s-main');
   principale.appendChild(img(premiere, `${s.title} – photo principale`));
-  principale.addEventListener('click', () => openBox([premiere], 0));
+  principale.addEventListener('click', () => { if (!Admin.on) openBox([s.images[0]], 0); });
+
+  /* mode administrateur : changer l'image principale (la première photo de la sortie) */
+  if (Admin.on) {
+    const VIDE = 'img/sorties/vide.jpg';
+    const changer = document.createElement('button');
+    changer.type = 'button'; changer.className = 'adm-mini adm-main-pencil'; changer.textContent = '✎';
+    changer.title = 'Changer l’image principale'; changer.setAttribute('aria-label', 'Changer l’image principale');
+    changer.addEventListener('click', e => {
+      e.stopPropagation();
+      Admin.form('Image principale', [
+        { name: 'img', label: 'Nouvelle image principale', type: 'image', mode: 'photo' },
+      ], { img: s.images[0] === VIDE ? '' : s.images[0] }, v => {
+        s.images[0] = v.img || VIDE;                     // image retirée : retour à l'image vide
+        if (!Store.set('sorties', SORTIES)) return false;
+        const im = principale.querySelector('img'); im.onerror = null; im.src = safeSrc(s.images[0]);
+      });
+    });
+    principale.append(changer);                          // crayon posé sur l'image elle-même
+  }
 
   /* mode administrateur : pas de carrousel, les photos secondaires sont empilées par ligne de trois et se déplacent à la poignée */
   function adminGrid() {

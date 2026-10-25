@@ -112,12 +112,12 @@ const Admin = (() => {
       } else if (mode === 'bike') {                    // moto détourée (fond uni retiré), centrée sur fond noir 16:10
         c = portraitCanvas(img, 800, 500, true);
       } else {                                         // photo ou logo : réduite
-        const max = mode === 'logo' ? 260 : 1000, s = Math.min(1, max / Math.max(w, h));
+        const max = mode === 'logo' ? 260 : 900, s = Math.min(1, max / Math.max(w, h));
         c.width = Math.round(w * s); c.height = Math.round(h * s); g = c.getContext('2d');
         g.drawImage(img, 0, 0, c.width, c.height);
       }
       URL.revokeObjectURL(url);
-      resolve(mode === 'logo' ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.8));
+      resolve(mode === 'logo' ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.72));
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image illisible')); };
     img.src = url;
@@ -179,12 +179,14 @@ const Admin = (() => {
       } else if (fd.type === 'image') {
         const prev = el('img', 'adm-prev'); prev.alt = ''; if (vals[fd.name]) prev.src = safeSrc(vals[fd.name]); else prev.hidden = true;
         const inp = el('input'); inp.type = 'file'; inp.accept = 'image/*';
+        const rm = el('button', 'adm-btn', 'Supprimer l’image'); rm.type = 'button'; rm.hidden = !vals[fd.name];
+        rm.onclick = () => { vals[fd.name] = ''; prev.hidden = true; rm.hidden = true; inp.value = ''; };       // retire l’image choisie (on peut en choisir une autre)
         inp.onchange = async () => {
           if (!inp.files[0]) return;
-          try { vals[fd.name] = await api.processImage(inp.files[0], fd.mode); prev.src = safeSrc(vals[fd.name]); prev.hidden = false; }
+          try { vals[fd.name] = await api.processImage(inp.files[0], fd.mode); prev.src = safeSrc(vals[fd.name]); prev.hidden = false; rm.hidden = false; }
           catch (e) { alert(e.message); }
         };
-        row.append(prev, inp);
+        row.append(prev, rm, inp);
       } else if (fd.type === 'images') {
         vals[fd.name] = (vals[fd.name] || []).slice();
         const list = el('div', 'adm-thumbs'), inp = el('input');

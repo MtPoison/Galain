@@ -81,6 +81,9 @@ const Store = (() => {
   try { draft = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { draft = {}; }
   const persist = () => {
     try { localStorage.setItem(KEY, JSON.stringify(draft)); return true; }
+    catch (e) {}
+    dropCache();                                                  // la copie du site gardée pour l'affichage rapide prend aussi de la place : on la libère, elle se recrée toute seule
+    try { localStorage.setItem(KEY, JSON.stringify(draft)); return true; }
     catch (e) { alert('Le stockage du navigateur est plein. Exportez vos données puis retirez des images.'); return false; }
   };
   const clearDraft = () => { draft = {}; try { localStorage.removeItem(KEY); } catch (e) {} };
