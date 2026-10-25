@@ -579,3 +579,7 @@ body.is-dragging, body.is-dragging * { user-select: none; -webkit-user-select: n
 /* Android / mobile : pas de rectangle bleu au toucher d'une carte, d'un lien ou d'un bouton */
 * { -webkit-tap-highlight-color: transparent; }
 a, button, .card, .thumb, .star, .cal-nav, .day { -webkit-tap-highlight-color: rgba(0, 0, 0, 0); outline-offset: 2px; }
+
+/* en haut de page la bannière couvre tout l'écran : le fond « viking » est masqué, pour que le tirer-pour-rafraîchir (qui décale la page) montre du noir et non l'image */
+html { background: #000; }
+html.au-sommet .page::before { opacity: 0; }

@@ -441,3 +441,9 @@ renderAll();
   box.addEventListener('click', e => { if (e.target !== img) close(); });       // croix ou clic à côté de l'image
   addEventListener('keydown', e => { if (e.key === 'Escape' && box.classList.contains('open')) close(); });
 })();
+
+/* masque le fond viking tant qu'on est tout en haut (voir .au-sommet dans style.css) */
+(() => {
+  const maj = () => document.documentElement.classList.toggle('au-sommet', scrollY < 2);
+  addEventListener('scroll', maj, { passive: true }); addEventListener('pageshow', maj); maj();
+})();
