@@ -38,11 +38,15 @@
   const scene = new T.Scene();
   const camera = new T.PerspectiveCamera(FOV, 1, 0.1, 80);
 
-  const canvasTex = (w, h, draw) => {
+  const canvasTex = (w, h, draw, premul = true) => {
     const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
-    const tx = new T.CanvasTexture(c); tx.premultiplyAlpha = true; return tx;     // dégradés très transparents : sans cela, les pixels presque invisibles donnent des grains colorés (surtout sur mobile)
+    const tx = new T.CanvasTexture(c); tx.premultiplyAlpha = premul; return tx;     // dégradés très transparents : sans cela, les pixels presque invisibles donnent des grains colorés (surtout sur mobile)
   };
   const basic = (tex, o = {}) => new T.MeshBasicMaterial(Object.assign({ map: tex, transparent: true, depthWrite: false, premultipliedAlpha: !!tex.premultiplyAlpha }, o));
+  /* lumières (halo, reflet, ombre) : textures OPAQUES sur fond noir, ajoutées à l'image (blending additif).
+     Les dégradés transparents donnaient des grains colorés sur mobile (pixels presque invisibles mal restitués). */
+  const lightTex = (w, h, draw) => canvasTex(w, h, (g, W, H) => { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); draw(g, W, H); }, false);
+  const light = (tex, o = {}) => new T.MeshBasicMaterial(Object.assign({ map: tex, transparent: true, depthWrite: false, blending: T.AdditiveBlending }, o));
 
   /* ---------- la moto (groupe qui avance) ---------- */
   const bike = new T.Group(); scene.add(bike);
@@ -53,7 +57,7 @@
     const W = IMG_W * SC, H = IMG_H * SC, cy = px(IMG_W / 2, IMG_H / 2).y;
 
     /* halo + contour lumineux derrière la moto : détache la silhouette noire du fond noir */
-    const halo = new T.Mesh(new T.PlaneGeometry(6.2, 3.8), basic(canvasTex(256, 160, (g, w, h) => {
+    const halo = new T.Mesh(new T.PlaneGeometry(6.2, 3.8), light(lightTex(256, 160, (g, w, h) => {
       g.scale(1, h / w); const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
       gr.addColorStop(0, 'rgba(255,255,255,.26)'); gr.addColorStop(.5, 'rgba(255,255,255,.08)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = gr; g.fillRect(0, 0, w, w);
@@ -63,9 +67,9 @@
     const pad = 70, small = document.createElement('canvas'); small.width = (IMG_W + pad * 2) / 6; small.height = (IMG_H + pad * 2) / 6;
     const big = document.createElement('canvas'); big.width = IMG_W + pad * 2; big.height = IMG_H + pad * 2;
     const bg = big.getContext('2d'); bg.drawImage(img, pad, pad); bg.globalCompositeOperation = 'source-in'; bg.fillStyle = '#fff'; bg.fillRect(0, 0, big.width, big.height);
-    const sg = small.getContext('2d'); sg.imageSmoothingQuality = 'high'; sg.drawImage(big, 0, 0, small.width, small.height);
-    const glowTex = new T.CanvasTexture(small); glowTex.premultiplyAlpha = true;
-    const glow = new T.Mesh(new T.PlaneGeometry((IMG_W + pad * 2) * SC, (IMG_H + pad * 2) * SC), basic(glowTex, { opacity: 0.55 }));
+    const sg = small.getContext('2d'); sg.fillStyle = '#000'; sg.fillRect(0, 0, small.width, small.height); sg.imageSmoothingQuality = 'high'; sg.drawImage(big, 0, 0, small.width, small.height);
+    const glowTex = new T.CanvasTexture(small); glowTex.premultiplyAlpha = false;
+    const glow = new T.Mesh(new T.PlaneGeometry((IMG_W + pad * 2) * SC, (IMG_H + pad * 2) * SC), light(glowTex, { opacity: 0.55 }));
     glow.position.set(0, cy, -0.2); bike.add(glow);
 
     bikeSprite = new T.Mesh(new T.PlaneGeometry(W, H), basic(tex, { depthWrite: true }));
@@ -73,14 +77,14 @@
 
     /* reflet du phare */
     const lamp = px(460, 115);
-    const flare = new T.Mesh(new T.PlaneGeometry(0.9, 0.9), basic(canvasTex(64, 64, (g, w) => {
+    const flare = new T.Mesh(new T.PlaneGeometry(0.9, 0.9), light(lightTex(64, 64, (g, w) => {
       const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.25, 'rgba(255,245,220,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = gr; g.fillRect(0, 0, w, w);
     }), { blending: T.AdditiveBlending }));
     flare.position.set(lamp.x + 0.06, lamp.y, 0.05); bike.add(flare);
 
     /* ombre sous les roues */
-    const shadow = new T.Mesh(new T.PlaneGeometry(3.6, 0.36), basic(canvasTex(128, 16, (g, w, h) => {
+    const shadow = new T.Mesh(new T.PlaneGeometry(3.6, 0.36), light(lightTex(128, 16, (g, w, h) => {
       const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,.2)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
       g.save(); g.scale(1, h / w); g.fillStyle = gr; g.fillRect(0, 0, w, w); g.restore();
     })));
