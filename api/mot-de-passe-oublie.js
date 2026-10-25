@@ -6,7 +6,8 @@ const crypto = require('crypto');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
-  const { SUPABASE_URL, SUPABASE_SERVICE_KEY, RESEND_API_KEY, ADMIN_EMAIL } = process.env;
+  const env = k => (process.env[k] || '').trim();                  // retire les espaces / retours à la ligne collés par erreur
+  const SUPABASE_URL = env('SUPABASE_URL'), SUPABASE_SERVICE_KEY = env('SUPABASE_SERVICE_KEY'), RESEND_API_KEY = env('RESEND_API_KEY'), ADMIN_EMAIL = env('ADMIN_EMAIL');
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !RESEND_API_KEY || !ADMIN_EMAIL) return res.status(500).json({ error: 'Service non configuré' });
 
   const headers = Object.assign({ apikey: SUPABASE_SERVICE_KEY, 'Content-Type': 'application/json' },
@@ -35,7 +36,7 @@ module.exports = async (req, res) => {
     if (!reset.ok) return res.status(500).json({ error: 'Impossible de modifier le mot de passe.' });
     return res.status(200).json({ ok: true });
   } catch (e) {
-    console.error(e);                                              // visible dans Vercel → Logs
-    return res.status(500).json({ error: 'Erreur du serveur : ' + (e.cause && e.cause.message || e.message) });
+    console.error(e.name);                                         // le détail pourrait contenir une clé : on ne l'affiche pas
+    return res.status(500).json({ error: 'Erreur du serveur.' });
   }
 };
