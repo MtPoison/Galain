@@ -664,3 +664,5 @@ body.admin-on .art-item img { cursor: default; }
 /* lieu de la sortie : seul, centré et bien lisible sous le titre */
 .sortie .s-meta { margin-bottom: 2rem; }
 .sortie .s-place { font-family: var(--f-head); font-size: clamp(1.2rem, 3.2vw, 1.7rem); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: center; }
+
+.adm-visits { font-family: var(--f-head); letter-spacing: .08em; color: var(--gold); padding: 0 .6rem; align-self: center; white-space: nowrap; }

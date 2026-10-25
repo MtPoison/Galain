@@ -373,6 +373,10 @@ const Admin = (() => {
     bar = el('div', 'adm-bar'); bar.id = 'adm-bar';
     bar.innerHTML = '<strong><span class="runes">ᛟ</span> Mode administrateur</strong>';
     const btn = (t, fn, cls) => { const b = el('button', 'adm-btn ' + (cls || ''), t); b.type = 'button'; b.onclick = fn; bar.append(b); };
+    if (Store.remote && document.querySelector('.hero')) {          // page d'accueil : nombre de visiteurs
+      const v = el('span', 'adm-visits', 'Visiteurs : …'); v.title = 'Visiteurs différents (une adresse = un visiteur par jour)'; bar.append(v);
+      Store.visits().then(d => { v.textContent = d ? `Visiteurs : ${d.total} (aujourd’hui : ${d.today})` : 'Visiteurs : indisponible'; });
+    }
     if (Store.remote) {
       btn('Sauvegarder', async function () {
         this.disabled = true; this.textContent = 'Enregistrement…';

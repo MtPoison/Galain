@@ -63,6 +63,16 @@ const Store = (() => {
     }
   }
 
+  /* visiteurs : chaque page vue (hors administrateur) signale sa visite, au plus une fois par jour et par navigateur ; le serveur dédoublonne par adresse */
+  if (REMOTE && !adminOn()) {
+    try {
+      const jour = new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem('galian-visite') !== jour) {
+        rest('rpc/register_visit', {}).then(r => { if (r.ok) try { localStorage.setItem('galian-visite', jour); } catch (e) {} }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+
   /* appel d'une fonction du serveur : true si réussi, sinon message d'erreur affiché et false */
   const call = async (fn, body, what) => {
     try {
@@ -112,6 +122,15 @@ const Store = (() => {
       return true;
     },
     discardDraft: clearDraft,
+    /* compteur de visiteurs (administrateur) : { total, today }, ou null si indisponible */
+    async visits() {
+      if (!REMOTE) return null;
+      try {
+        const r = await rest('rpc/visit_count', { p_pass: adminPw() });
+        const d = r.ok ? await r.json() : null;
+        return d && typeof d.total === 'number' ? d : null;
+      } catch (e) { return null; }
+    },
     /* efface tout : le brouillon et, en ligne, le contenu publié */
     async resetAll() {
       if (REMOTE && !(await call('reset_content', { p_pass: adminPw() }, 'réinitialisation'))) return false;

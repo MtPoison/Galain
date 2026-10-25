@@ -164,3 +164,40 @@ grant execute on function forgot_get(), forgot_mark() to service_role;
 ## Sécurité (6e script – à lancer en dernier)
 
 Exécutez le contenu de `SECURITY.sql` (il supprime aussi la copie en clair du mot de passe : « mot de passe oublié » envoie maintenant un mot de passe temporaire) dans **SQL Editor** : blocage après 5 mots de passe faux en 15 minutes, clés de contenu limitées à la liste connue, taille maximale, 8 caractères minimum pour le mot de passe, limitation des pouces. Le site fonctionne avec ou sans ce script, mais le blocage anti force brute n'est actif qu'après son exécution.
+
+## Compteur de visiteurs (7e script)
+
+Compte les visiteurs différents (une adresse = un visiteur par jour, stockée seulement sous forme hachée, jamais en clair). Le total n'est lisible que par l'administrateur, sur la page d'accueil.
+
+**SQL Editor → New query**, collez, puis **Run** :
+
+```sql
+create table if not exists visitors (
+  ip_hash text not null,
+  day date not null default current_date,
+  primary key (ip_hash, day)
+);
+alter table visitors enable row level security;               -- aucune policy : illisible depuis le site
+revoke all on visitors from anon, authenticated;
+
+create or replace function register_visit() returns void
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  insert into visitors (ip_hash) values (encode(digest(client_ip() || 'galian-mcp', 'sha256'), 'hex'))
+  on conflict do nothing;
+end $$;
+
+create or replace function visit_count(p_pass text) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if not check_admin(p_pass) then return null; end if;
+  return jsonb_build_object(
+    'total', (select count(distinct ip_hash) from visitors),
+    'today', (select count(*) from visitors where day = current_date));
+end $$;
+
+revoke execute on function register_visit(), visit_count(text) from public;
+grant execute on function register_visit(), visit_count(text) to anon;
+```
+
+(La fonction `client_ip()` vient de `SECURITY.sql` : lancez-le d'abord s'il ne l'est pas déjà.)

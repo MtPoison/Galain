@@ -12,7 +12,7 @@
   if (!liste) {
     main.querySelector('.s-meta').textContent = 'Aucune sortie cette année-là.';
   } else {
-    main.querySelector('.s-meta').innerHTML = `<span>ᚱ ${liste.length} sortie${liste.length > 1 ? 's' : ''}</span>`;
+    main.querySelector('.s-meta').innerHTML = `<span>${liste.length} sortie${liste.length > 1 ? 's' : ''}</span>`;
     /* un bloc par mois : le nom du mois, puis les sorties en dessous */
     const conteneur = main.querySelector('.months');
     const parMois = {};
