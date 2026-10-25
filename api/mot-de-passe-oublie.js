@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Galian MCP <onboarding@resend.dev>', to: [ADMIN_EMAIL], subject: 'Galian MCP – nouveau mot de passe administrateur',
+        from: 'Galian MCP <onboarding@resend.dev>', to: ADMIN_EMAIL.split(',').map(a => a.trim()).filter(Boolean),     // plusieurs adresses possibles, séparées par des virgules subject: 'Galian MCP – nouveau mot de passe administrateur',
         text: 'Votre nouveau mot de passe administrateur : ' + nouveau + '\n\nVous pourrez le changer depuis le mode administrateur (« Réinitialiser le mot de passe »).',
       }),
     });
