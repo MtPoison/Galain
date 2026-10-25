@@ -244,10 +244,10 @@
     const pp3 = pp.geometry.attributes.position, ps = pp.geometry.attributes.aSize, pa = pp.geometry.attributes.aAlpha;
     for (let i = 0; i < M; i++) {
       if (P.age[i] >= P.life[i]) { pa.setX(i, 0); continue; }
-      P.age[i] += dt; const kk = P.age[i] / P.life[i];
+      P.age[i] += dt; const kk = Math.min(P.age[i] / P.life[i], 1);          // borné à 1 : au dernier pas, (1 - kk) devenait négatif et pow() donnait NaN, affiché en gros disque opaque sur iPhone
       P.vel[i * 3] *= 1 - dt * 1.4; P.vel[i * 3 + 1] += dt * 0.08;
       pp3.setXYZ(i, pp3.getX(i) + P.vel[i * 3] * dt, pp3.getY(i) + P.vel[i * 3 + 1] * dt, pp3.getZ(i) + P.vel[i * 3 + 2] * dt);
-      ps.setX(i, P.s0[i] + kk * 0.75); pa.setX(i, 0.4 * Math.pow(1 - kk, 1.4));
+      ps.setX(i, P.s0[i] + kk * 0.75); pa.setX(i, 0.4 * Math.pow(Math.max(1 - kk, 0), 1.4));
     }
     pp3.needsUpdate = ps.needsUpdate = pa.needsUpdate = true;
 
