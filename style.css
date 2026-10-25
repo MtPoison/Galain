@@ -34,7 +34,7 @@ body::before {
   opacity: .06;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-#embers { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+#embers { position: fixed; inset: 0; z-index: 3; pointer-events: none; }   /* au-dessus de la bannière (z-index 2) : braises visibles aussi sur l'animation, sur PC comme sur téléphone */
 .runes { font-family: var(--f-rune); letter-spacing: .3em; color: var(--gold); }
 
 /* ---------- HERO ---------- */
@@ -584,5 +584,6 @@ a, button, .card, .thumb, .star, .cal-nav, .day { -webkit-tap-highlight-color: r
 /* Fond viking, braises et grain : cachés PAR DÉFAUT, affichés seulement une fois la page défilée (classe .deja-defile posée par script.js).
    Au chargement, au refresh et quand on tire la page en haut (iPhone), on ne voit donc que du noir. */
 html { background: #000; }
-.page::before, #embers, body:has(#embers)::before { visibility: hidden; }          /* le grain reste visible sur les autres pages (sans script.js) */
-html.deja-defile .page::before, html.deja-defile #embers, html.deja-defile body:has(#embers)::before { visibility: visible; }
+.page::before, body:has(#embers)::before { visibility: hidden; }          /* le grain reste visible sur les autres pages (sans script.js) */
+html.deja-defile .page::before, html.deja-defile body:has(#embers)::before { visibility: visible; }
+html.tire #embers { visibility: hidden; }   /* pendant le « tirer pour rafraîchir » (page tirée vers le bas) : rien que du noir */

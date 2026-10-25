@@ -392,7 +392,6 @@ renderAll();
   const c = document.getElementById('embers');
   const ctx = c.getContext('2d');
   let w, h, parts;
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const spawn = (initial) => ({
     x: Math.random() * w,
     y: initial ? Math.random() * h : h + 10,
@@ -407,7 +406,7 @@ renderAll();
     parts = Array.from({ length: Math.min(70, Math.floor(w / 18)) }, () => spawn(true));
   }
   addEventListener('resize', resize); resize();
-  if (reduce) return;
+  /* les braises tournent aussi quand Windows a coupé les animations (« réduire les animations ») : sinon elles ne s'affichent jamais sur PC */
   (function loop() {
     ctx.clearRect(0, 0, w, h);
     parts.forEach((p, i) => {
@@ -444,6 +443,6 @@ renderAll();
 
 /* affiche le fond viking seulement une fois la page défilée (voir .deja-defile dans style.css) */
 (() => {
-  const maj = () => document.documentElement.classList.toggle('deja-defile', scrollY >= 2);
+  const maj = () => { const c = document.documentElement.classList; c.toggle('deja-defile', scrollY >= 2); c.toggle('tire', scrollY < 0); };
   addEventListener('scroll', maj, { passive: true }); addEventListener('pageshow', maj); maj();
 })();
