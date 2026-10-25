@@ -11,6 +11,20 @@ const Admin = (() => {
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const getPass = () => localStorage.getItem(PASS) || 'galian';
   api.el = el;
+  /* rechargement après une modification : on revient exactement où se trouvait l'administrateur (voir api.recharger) */
+  const SCROLL = 'galian-scroll';
+  api.recharger = () => {
+    try { sessionStorage.setItem(SCROLL, JSON.stringify({ y: scrollY, p: location.pathname + location.search })); } catch (e) {}
+    location.reload();
+  };
+  try {
+    const d = JSON.parse(sessionStorage.getItem(SCROLL)); sessionStorage.removeItem(SCROLL);
+    if (d && d.p === location.pathname + location.search && d.y > 0) {
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      const aller = () => scrollTo(0, d.y);
+      aller(); addEventListener('DOMContentLoaded', aller); addEventListener('load', () => { aller(); setTimeout(aller, 100); setTimeout(aller, 400); });
+    }
+  } catch (e) {}
 
   /* ---------- portrait : même traitement que les portraits du site ----------
      1. le fond uni (blanc, gris…) est détecté et remplacé par du noir
@@ -339,7 +353,7 @@ const Admin = (() => {
         this.disabled = true; this.textContent = 'Enregistrement…';
         const ok = await Store.save();
         this.disabled = false; this.textContent = ok ? 'Sauvegardé ✓' : 'Sauvegarder';
-        if (ok) setTimeout(() => { this.textContent = 'Sauvegarder'; }, 2000);
+        if (ok) setTimeout(api.recharger, 500);                       // modifications publiées : le site se recharge tout seul pour les afficher
       }, 'primary');
       btn('Réinitialiser le mot de passe', api.changePassword);
     } else {
@@ -348,7 +362,7 @@ const Admin = (() => {
       btn('Mot de passe', () => { const p = prompt('Nouveau mot de passe :'); if (p) { localStorage.setItem(PASS, p); alert('Mot de passe modifié.'); } });
     }
     btn('Tout réinitialiser', () => api.confirmPassword(Store.remote ? 'Effacer TOUT le contenu modifié (en ligne aussi) et revenir au contenu d’origine du site ? Entrez le mot de passe pour confirmer.' : 'Effacer toutes vos modifications et revenir au contenu publié ? Entrez le mot de passe pour confirmer.',
-      async () => { if (await Store.resetAll()) api.onChange(); }, 'Réinitialiser'));
+      async () => { if (await Store.resetAll()) api.recharger(); }, 'Réinitialiser'));
     btn('Quitter', api.quit);
     document.body.append(bar);
   }

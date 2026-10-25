@@ -9,8 +9,10 @@
      Safari iPhone restaure la position de défilement APRÈS le chargement : on remet donc en haut plusieurs fois, et sur un refresh on retire l'ancre (#...) */
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-  if (nav && nav.type === 'reload' && location.hash) history.replaceState(null, '', location.pathname + location.search);
-  const enHaut = () => { if (!location.hash) scrollTo(0, 0); };
+  let garde = false;                                      // rechargement demandé par l'administrateur après une modification : on garde sa position (voir admin.js)
+  try { const d = JSON.parse(sessionStorage.getItem('galian-scroll')); garde = !!(d && d.p === location.pathname + location.search && d.y > 0); } catch (e) {}
+  if (nav && nav.type === 'reload' && location.hash && !garde) history.replaceState(null, '', location.pathname + location.search);
+  const enHaut = () => { if (!location.hash && !garde) scrollTo(0, 0); };
   enHaut();
   addEventListener('load', () => { enHaut(); setTimeout(enHaut, 50); setTimeout(enHaut, 300); });
   addEventListener('pageshow', enHaut);
