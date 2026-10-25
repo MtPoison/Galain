@@ -423,3 +423,21 @@ renderAll();
   })();
 })();
 
+
+/* ================= MOTO EN GRAND ================= */
+(() => {
+  const box = document.createElement('div');
+  box.className = 'lightbox moto-box'; box.setAttribute('aria-hidden', 'true');
+  box.innerHTML = '<button type="button" class="lb-close" aria-label="Fermer">✕</button><img alt="Moto">';
+  document.body.append(box);
+  const img = box.querySelector('img');
+  const close = () => { box.classList.remove('open'); box.setAttribute('aria-hidden', 'true'); };
+  /* clic sur une moto : elle s'ouvre en grand (pas en mode administrateur, où l'appui sert à déplacer) */
+  $('#members').addEventListener('click', e => {
+    const src = e.target.closest('.bike img');
+    if (!src || A()) return;
+    img.src = safeSrc(src.getAttribute('src')); box.classList.add('open'); box.setAttribute('aria-hidden', 'false');
+  });
+  box.addEventListener('click', e => { if (e.target !== img) close(); });       // croix ou clic à côté de l'image
+  addEventListener('keydown', e => { if (e.key === 'Escape' && box.classList.contains('open')) close(); });
+})();

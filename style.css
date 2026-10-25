@@ -568,3 +568,7 @@ body.is-dragging, body.is-dragging * { user-select: none; -webkit-user-select: n
 .adm-forgot { display: block; margin-top: 1rem; text-align: center; font-size: .85rem; color: var(--muted); text-decoration: underline; }
 .adm-forgot:hover { color: var(--gold); }
 .adm-err { display: block; min-height: 1.1em; margin-top: .3rem; color: #ff5c5c; font-size: .85rem; }
+
+/* moto agrandie (clic sur la moto d'un membre) : on ferme avec la croix, Échap ou un clic à côté de l'image */
+.moto-box img { width: auto; height: auto; max-width: 96vw; max-height: 92vh; object-fit: contain; border: 1px solid var(--gold-soft); }
+.bike img { cursor: zoom-in; }
