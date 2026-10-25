@@ -40,9 +40,9 @@
 
   const canvasTex = (w, h, draw) => {
     const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
-    const tx = new T.CanvasTexture(c); return tx;
+    const tx = new T.CanvasTexture(c); tx.premultiplyAlpha = true; return tx;     // dégradés très transparents : sans cela, les pixels presque invisibles donnent des grains colorés (surtout sur mobile)
   };
-  const basic = (tex, o = {}) => new T.MeshBasicMaterial(Object.assign({ map: tex, transparent: true, depthWrite: false }, o));
+  const basic = (tex, o = {}) => new T.MeshBasicMaterial(Object.assign({ map: tex, transparent: true, depthWrite: false, premultipliedAlpha: !!tex.premultiplyAlpha }, o));
 
   /* ---------- la moto (groupe qui avance) ---------- */
   const bike = new T.Group(); scene.add(bike);
@@ -64,7 +64,7 @@
     const big = document.createElement('canvas'); big.width = IMG_W + pad * 2; big.height = IMG_H + pad * 2;
     const bg = big.getContext('2d'); bg.drawImage(img, pad, pad); bg.globalCompositeOperation = 'source-in'; bg.fillStyle = '#fff'; bg.fillRect(0, 0, big.width, big.height);
     const sg = small.getContext('2d'); sg.imageSmoothingQuality = 'high'; sg.drawImage(big, 0, 0, small.width, small.height);
-    const glowTex = new T.CanvasTexture(small);
+    const glowTex = new T.CanvasTexture(small); glowTex.premultiplyAlpha = true;
     const glow = new T.Mesh(new T.PlaneGeometry((IMG_W + pad * 2) * SC, (IMG_H + pad * 2) * SC), basic(glowTex, { opacity: 0.55 }));
     glow.position.set(0, cy, -0.2); bike.add(glow);
 

@@ -583,3 +583,5 @@ a, button, .card, .thumb, .star, .cal-nav, .day { -webkit-tap-highlight-color: r
 /* en haut de page la bannière couvre tout l'écran : le fond « viking » est masqué, pour que le tirer-pour-rafraîchir (qui décale la page) montre du noir et non l'image */
 html { background: #000; }
 html.au-sommet .page::before { opacity: 0; }
+/* en haut de page (refresh, tirer la page) : fond noir pur, sans les braises ni le grain */
+html.au-sommet #embers, html.au-sommet body::before { display: none; }
