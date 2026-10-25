@@ -132,3 +132,31 @@ Vercel → projet → **Settings → Environment Variables**, ajoutez :
 | `ADMIN_EMAIL` | l'adresse qui reçoit le mot de passe |
 
 Puis **Deployments → Redeploy**.
+
+## Mot de passe oublié : envoi du mot de passe actuel (5e script)
+
+Le mot de passe est stocké haché (illisible). Pour pouvoir l'envoyer, une copie en clair est gardée dans une colonne que seule la clé secrète (Vercel) peut lire.
+
+```sql
+alter table admin_secret add column if not exists clair text;
+
+-- remplacez MON_MOT_DE_PASSE par votre mot de passe actuel
+update admin_secret set clair = 'MON_MOT_DE_PASSE' where id = 1;
+
+create or replace function forgot_get() returns text
+language sql security definer set search_path = public, extensions as $$ select clair from admin_secret where id = 1; $$;
+
+create or replace function forgot_mark() returns void
+language sql security definer set search_path = public, extensions as $$ update admin_secret set last_reset = now() where id = 1; $$;
+
+create or replace function change_admin_password(p_old text, p_new text) returns void
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if not check_admin(p_old) then raise exception 'mot de passe incorrect'; end if;
+  if length(p_new) < 4 then raise exception 'mot de passe trop court'; end if;
+  update admin_secret set hash = crypt(p_new, gen_salt('bf')), clair = p_new where id = 1;
+end $$;
+
+revoke execute on function forgot_get(), forgot_mark() from public, anon, authenticated;
+grant execute on function forgot_get(), forgot_mark() to service_role;
+```
