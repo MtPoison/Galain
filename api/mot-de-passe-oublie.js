@@ -13,16 +13,12 @@ module.exports = async (req, res) => {
   const rpc = fn => fetch(SUPABASE_URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers, body: '{}' });
 
   try {
-    /* 1. une seule demande toutes les 10 minutes */
-    const check = await rpc('forgot_check');
-    if (!check.ok) return res.status(429).json({ error: 'Une demande vient d’être faite. Réessayez dans 10 minutes.' });
-
-    /* 2. mot de passe actuel */
+    /* 1. mot de passe actuel */
     const lu = await rpc('forgot_get');
     const mdp = lu.ok ? await lu.json() : null;
     if (!mdp) return res.status(409).json({ error: 'Mot de passe non disponible : changez-le une fois depuis le mode administrateur.' });
 
-    /* 3. envoi par e-mail */
+    /* 2. envoi par e-mail */
     const mail = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
@@ -35,7 +31,6 @@ module.exports = async (req, res) => {
     });
     if (!mail.ok) return res.status(502).json({ error: 'Envoi de l’e-mail impossible.' });
 
-    await rpc('forgot_mark');
     return res.status(200).json({ ok: true });
   } catch (e) {
     console.error(e.name);                                         // le détail pourrait contenir une clé : on ne l'affiche pas
