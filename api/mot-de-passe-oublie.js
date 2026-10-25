@@ -35,6 +35,7 @@ module.exports = async (req, res) => {
     if (!reset.ok) return res.status(500).json({ error: 'Impossible de modifier le mot de passe.' });
     return res.status(200).json({ ok: true });
   } catch (e) {
-    return res.status(500).json({ error: 'Erreur du serveur.' });
+    console.error(e);                                              // visible dans Vercel → Logs
+    return res.status(500).json({ error: 'Erreur du serveur : ' + (e.cause && e.cause.message || e.message) });
   }
 };
