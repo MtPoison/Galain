@@ -309,6 +309,12 @@ function allyForm(list, i) {
     if (Store.set('allies', list)) renderAllies(); else return false;
   });
 }
+/* ordre des clubs amis (mode administrateur) : poignée, puis glisser */
+function saveAllyOrder(box) {
+  const list = Store.get('allies', ALLIES_DEFAULT);
+  const ordre = [...box.querySelectorAll('.ally-wrap[data-i]')].map(n => list[+n.dataset.i]);
+  if (Store.set('allies', ordre)) renderAllies();
+}
 function renderAllies() {
   const list = Store.get('allies', ALLIES_DEFAULT), box = $('#allies-list');
   box.innerHTML = '';
@@ -325,7 +331,8 @@ function renderAllies() {
       adminBtn('✕', 'Retirer ce club', () => {
         Admin.confirm(`Retirer « ${a.name} » ?`, () => { list.splice(i, 1); Store.set('allies', list); renderAllies(); });
       }, 'danger'));
-    wrap.append(link, bar); box.append(wrap);
+    wrap.dataset.i = i; wrap.append(link, bar, makeHandle()); box.append(wrap);
+    holdDrag(wrap, box, '.ally-wrap[data-i]', 'x', () => saveAllyOrder(box), HANDLE);        // appui sur la poignée, puis glisser (échange avec le club survolé)
   });
   if (A()) box.append(addTile('＋ Ajouter un club', () => allyForm(list, null), 'tile ally-tile'));
 }
