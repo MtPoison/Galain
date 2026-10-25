@@ -117,7 +117,13 @@ const Admin = (() => {
         g.drawImage(img, 0, 0, c.width, c.height);
       }
       URL.revokeObjectURL(url);
-      resolve(mode === 'logo' ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.72));
+      /* en ligne : l'image part dans le stockage Supabase et seule son adresse est gardée (pas de limite de 5 Mo du navigateur) ;
+         si l'envoi échoue (bucket pas créé, pas de réseau), repli sur l'image intégrée au brouillon */
+      const png = mode === 'logo', type = png ? 'image/png' : 'image/jpeg';
+      c.toBlob(async blob => {
+        const lien = blob && Store.remote ? await Store.upload(blob, png ? 'png' : 'jpg') : null;
+        resolve(lien || c.toDataURL(type, 0.72));
+      }, type, 0.72);
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image illisible')); };
     img.src = url;

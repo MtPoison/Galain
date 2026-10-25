@@ -110,6 +110,17 @@ const Store = (() => {
       return true;
     },
     discardDraft: clearDraft,
+    /* envoie une image dans le stockage de fichiers Supabase (bucket « photos ») : renvoie son adresse publique, ou null (stockage non prêt) */
+    async upload(blob, ext) {
+      if (!REMOTE) return null;
+      const name = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)) + '.' + ext;
+      try {
+        const r = await fetch(SUPABASE_URL + '/storage/v1/object/photos/' + name, {
+          method: 'POST', headers: { apikey: SUPABASE_KEY, 'Content-Type': blob.type, 'x-upsert': 'false' }, body: blob,
+        });
+        return r.ok ? SUPABASE_URL + '/storage/v1/object/public/photos/' + name : null;
+      } catch (e) { return null; }
+    },
     /* efface tout : le brouillon et, en ligne, le contenu publié */
     async resetAll() {
       if (REMOTE && !(await call('reset_content', { p_pass: adminPw() }, 'réinitialisation'))) return false;
