@@ -194,8 +194,8 @@
         setTimeout(() => { track.style.transition = 'none'; busy = false; }, DUREE + 30);
       }
     };
-    prev.addEventListener('click', () => go(-1));
-    next.addEventListener('click', () => go(1));
+    prev.addEventListener('click', () => { go(-1); prev.blur(); });
+    next.addEventListener('click', () => { go(1); next.blur(); });
     addEventListener('keydown', e => {
       if (document.getElementById('lightbox').classList.contains('open')) return;
       if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'ArrowRight') go(1);
