@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sorties – Galian MCP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Runic&family=Uncial+Antiqua&family=Cinzel:wght@400;600&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html">Le Club</a>
+    <a href="index.html#freres">Membres</a>
+    <a href="index.html#sorties">Sorties</a>
+    <a href="index.html#calendrier">Calendrier</a>
+    <a href="index.html#reseaux">Réseaux</a>
+  </nav>
+
+  <main id="annee" class="section sortie">
+    <p class="runes top-runes">ᚠᚢᚦᚨᚱᚲ</p>
+    <p class="s-date">Sorties de</p>
+    <h1 class="year-title"></h1>
+    <p class="s-meta"></p>
+    <div class="divider"><span>ᚱ</span></div>
+
+    <div class="months"></div>
+
+    <div class="year-links"></div>
+    <a class="back" href="index.html#sorties">Retour aux sorties</a>
+  </main>
+
+  <footer id="reseaux" class="footer">
+    <div class="divider"><span>ᛞ</span></div>
+    <h2>Rejoignez la Meute</h2>
+    <ul class="socials">
+      <li><a href="#" aria-label="Facebook" title="Facebook"><svg viewBox="0 0 24 24"><path d="M13.5 22v-8h2.7l.5-3.2h-3.2V8.7c0-.9.4-1.7 1.8-1.7h1.5V4.2S15.5 4 14.3 4C11.8 4 10.2 5.500 10.200 8.100v2.700H7.500V14h2.700v8z"/></svg></a></li>
+      <li><a href="#" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm5 2.500a4.500 4.500 0 1 1 0 9 4.500 4.500 0 0 1 0-9zm0 2a2.500 2.500 0 1 0 0 5 2.500 2.500 0 0 0 0-5zM17.300 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg></a></li>
+      <li><a href="#" aria-label="YouTube" title="YouTube"><svg viewBox="0 0 24 24"><path d="M21.600 7.200a2.500 2.500 0 0 0-1.800-1.800C18.200 5 12 5 12 5s-6.200 0-7.800.4A2.500 2.500 0 0 0 2.400 7.200C2 8.800 2 12 2 12s0 3.200.4 4.800a2.500 2.500 0 0 0 1.800 1.800C5.800 19 12 19 12 19s6.200 0 7.800-.4a2.500 2.500 0 0 0 1.800-1.800c.4-1.600.4-4.800.4-4.800s0-3.200-.4-4.800zM10 15V9l5.200 3z"/></svg></a></li>
+      <li><a href="#" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path d="M16 3h-3v12.500a2.500 2.500 0 1 1-2.500-2.500c.3 0 .5 0 .8.100V10a5.600 5.600 0 1 0 4.700 5.500V9.200A6.800 6.800 0 0 0 20 10.500V7.500A4 4 0 0 1 16 3z"/></svg></a></li>
+      <li><a href="#" aria-label="Discord" title="Discord"><svg viewBox="0 0 24 24"><path d="M19.500 5.500A16 16 0 0 0 15.600 4.300l-.5 1a14 14 0 0 0-4.200 0l-.5-1A16 16 0 0 0 6.500 5.500C4 9.200 3.300 12.800 3.600 16.400a16 16 0 0 0 4.800 2.400l1-1.600a10 10 0 0 1-1.600-.8l.4-.3a11.500 11.500 0 0 0 9.600 0l.4.300c-.5.300-1 .600-1.600.800l1 1.600a16 16 0 0 0 4.800-2.400c.4-4.200-.7-7.800-2.900-10.900zM9.700 14.200c-.9 0-1.600-.8-1.600-1.800s.7-1.800 1.600-1.800 1.600.8 1.600 1.800-.7 1.800-1.600 1.800zm4.600 0c-.9 0-1.600-.8-1.600-1.800s.7-1.800 1.600-1.800 1.600.8 1.600 1.800-.7 1.800-1.600 1.800z"/></svg></a></li>
+    </ul>
+    <p class="runes copy">ᚷᚨᛚᛁᚨᚾ ᛗᚲᛈ · © 2026</p>
+  </footer>
+
+  <script src="site-data.js"></script>
+  <script src="store.js"></script>
+  <script src="data.js"></script>
+  <script src="annee.js"></script>
+  <script src="admin.js"></script>
+  <script>Admin.onChange = () => location.reload();   // connexion / déconnexion : la page se recharge</script>
+</body>
+</html>
