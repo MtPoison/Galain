@@ -29,7 +29,10 @@ module.exports = async (req, res) => {
         text: 'Votre mot de passe administrateur : ' + mdp,
       }),
     });
-    if (!mail.ok) return res.status(502).json({ error: 'Envoi de l’e-mail impossible.' });
+    if (!mail.ok) {
+      const d = await mail.json().catch(() => ({}));                // raison donnée par Resend (ne contient pas de clé)
+      return res.status(502).json({ error: 'Envoi de l’e-mail impossible' + (d.message ? ' : ' + d.message : '.') });
+    }
 
     return res.status(200).json({ ok: true });
   } catch (e) {
