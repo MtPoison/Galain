@@ -200,13 +200,21 @@ const Admin = (() => {
     f.append(i, msg, bar);
     const m = modal('Mode administrateur', f);
     no.onclick = m.close; i.focus();
-    f.onsubmit = e => {
+    const entrer = () => { sessionStorage.setItem(SESSION, '1'); api.on = true; m.close(); mount(); api.onChange(); };
+    f.onsubmit = async e => {
       e.preventDefault();
-      if (i.value !== getPass()) { msg.textContent = 'Mot de passe incorrect.'; i.select(); return; }
-      sessionStorage.setItem(SESSION, '1'); api.on = true; m.close(); mount(); api.onChange();
+      if (!Store.remote) {                                         // sans serveur : mot de passe local
+        if (i.value !== getPass()) { msg.textContent = 'Mot de passe incorrect.'; i.select(); return; }
+        return entrer();
+      }
+      msg.textContent = 'Vérification…';
+      try {
+        if (!(await Store.checkAdmin(i.value))) { msg.textContent = 'Mot de passe incorrect.'; i.select(); return; }
+      } catch (err) { msg.textContent = 'Connexion au serveur impossible.'; return; }
+      Store.setAdminPw(i.value); entrer();                          // le mot de passe sert à signer chaque enregistrement
     };
   };
-  api.logout = () => { sessionStorage.removeItem(SESSION); api.on = false; mount(); api.onChange(); };
+  api.logout = () => { sessionStorage.removeItem(SESSION); Store.clearAdminPw(); api.on = false; mount(); api.onChange(); };
 
   /* ---------- export / import ---------- */
   function exporter() {
@@ -241,10 +249,12 @@ const Admin = (() => {
     bar = el('div', 'adm-bar'); bar.id = 'adm-bar';
     bar.innerHTML = '<strong><span class="runes">ᛟ</span> Mode administrateur</strong>';
     const btn = (t, fn, cls) => { const b = el('button', 'adm-btn ' + (cls || ''), t); b.type = 'button'; b.onclick = fn; bar.append(b); };
-    btn('Exporter pour publier', exporter, 'primary');
+    if (Store.remote) bar.append(el('span', 'adm-hint', 'Vos modifications sont publiées automatiquement'));
+    btn(Store.remote ? 'Exporter (sauvegarde)' : 'Exporter pour publier', exporter, Store.remote ? '' : 'primary');
     btn('Importer', importer);
-    btn('Mot de passe', () => { const p = prompt('Nouveau mot de passe :'); if (p) { localStorage.setItem(PASS, p); alert('Mot de passe modifié.'); } });
-    btn('Tout réinitialiser', () => api.confirm('Effacer toutes vos modifications et revenir au contenu publié ?', () => { Store.resetDraft(); api.onChange(); }, 'Réinitialiser'));
+    if (!Store.remote) btn('Mot de passe', () => { const p = prompt('Nouveau mot de passe :'); if (p) { localStorage.setItem(PASS, p); alert('Mot de passe modifié.'); } });
+    btn('Tout réinitialiser', () => api.confirm(Store.remote ? 'Effacer TOUT le contenu modifié en ligne et revenir au contenu d’origine du site ?' : 'Effacer toutes vos modifications et revenir au contenu publié ?',
+      () => { Store.resetDraft(); Store.whenSaved().then(api.onChange); }, 'Réinitialiser'));
     btn('Quitter', api.logout);
     document.body.append(bar);
   }

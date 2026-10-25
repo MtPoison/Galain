@@ -4,10 +4,6 @@
    Ses photos vont dans img/sorties/ (chemins ci-dessous).
    Pour ajouter un événement : ajoutez une ligne à EVENTS.
    ================================================ */
-/* Compteur de pouces partagé (Supabase) : collez ici l'URL et la clé « anon public » du projet. Voir SUPABASE.md */
-const SUPABASE_URL = 'https://hnmlvvmnpmiektatkspu.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_4U9ZfZdpriXK4c7Z2JUXnA_p1aWz3cR';
-
 const LOREM_A ='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.';
 const LOREM_B = 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
 const LOREM_C = 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.';
@@ -118,7 +114,7 @@ function makeSortieCard(s) {
 const THUMB_KEY = 'galian-thumbs';
 const mesPouces = () => { try { return JSON.parse(localStorage.getItem(THUMB_KEY)) || []; } catch (e) { return []; } };
 const aPouce = id => mesPouces().includes(id);
-/* Compteur partagé via Supabase (voir SUPABASE_URL / SUPABASE_KEY en haut du fichier). Sans ces clés : compteur local. */
+/* Compteur partagé via Supabase (voir SUPABASE_URL / SUPABASE_KEY dans store.js). Sans ces clés : compteur local. */
 const THUMBS_ON = !!(SUPABASE_URL && SUPABASE_KEY);
 const thumbCounts = {};
 const sbFetch = (path, opts = {}) => fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({
