@@ -666,3 +666,12 @@ body.admin-on .art-item img { cursor: default; }
 .sortie .s-place { font-family: var(--f-head); font-size: clamp(1.2rem, 3.2vw, 1.7rem); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: center; }
 
 .adm-visits { font-family: var(--f-head); letter-spacing: .08em; color: var(--gold); padding: 0 .6rem; align-self: center; white-space: nowrap; }
+
+/* sorties du mois sans jour précis : bandeau sous la grille du calendrier */
+.cal-month { display: flex; flex-direction: column; gap: .4rem; margin-top: .9rem; }
+.cal-month[hidden] { display: none; }
+.cal-month-chip { display: flex; align-items: baseline; gap: .6rem; width: 100%; text-align: left; background: rgba(255,255,255,.07); border: 1px dashed var(--gold-soft); color: var(--text); padding: .55rem .8rem; cursor: pointer; font: inherit; font-size: .95rem; transition: background .25s, color .25s; }
+.cal-month-chip:hover, .cal-month-chip.selected { background: var(--gold); color: #000; }
+.cal-month-rune { font-family: var(--f-rune); font-style: normal; color: var(--gold); }
+.cal-month-chip:hover .cal-month-rune, .cal-month-chip.selected .cal-month-rune { color: #000; }
+.cal-month-chip small { margin-left: auto; font-style: italic; opacity: .75; }

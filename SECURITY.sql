@@ -94,3 +94,8 @@ grant execute on function toggle_thumb(text, integer) to anon;
 drop function if exists forgot_get();
 drop function if exists forgot_mark();
 alter table admin_secret drop column if exists clair;
+
+-- 3. Délai d'attente : la ligne « sorties » contient toutes les photos (et vidéos) en base64, elle peut être lourde.
+--    Le délai par défaut du rôle anon (quelques secondes) la faisait échouer : « canceling statement due to statement timeout ».
+alter role anon set statement_timeout = '30s';
+notify pgrst, 'reload config';

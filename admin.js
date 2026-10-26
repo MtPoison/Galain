@@ -286,8 +286,9 @@ const Admin = (() => {
   api.logout = () => { sessionStorage.removeItem(SESSION); Store.clearAdminPw(); api.on = false; mount(); api.onChange(); };
 
   /* quitter : si des modifications n'ont pas été sauvegardées, on propose de les sauvegarder ou de les abandonner */
-  api.quit = () => {
+  api.quit = async () => {
     if (!Store.hasDraft()) return api.logout();
+    if (Store.remote && await Store.save()) return api.logout();    // sauvegarde automatique : on publie ce qui reste avant de partir
     const box = el('div', 'adm-confirm'), bar = el('div', 'adm-actions');
     const txt = el('p', 'adm-confirm-text', 'Des modifications ont été faites et ne sont pas sauvegardées.');
     box.append(el('span', 'adm-confirm-rune runes', 'ᛉ'), txt);
@@ -378,12 +379,6 @@ const Admin = (() => {
       Store.visits().then(d => { v.textContent = d ? `Visiteurs : ${d.total} (aujourd’hui : ${d.today})` : 'Visiteurs : indisponible'; });
     }
     if (Store.remote) {
-      btn('Sauvegarder', async function () {
-        this.disabled = true; this.textContent = 'Enregistrement…';
-        const ok = await Store.save();
-        this.disabled = false; this.textContent = ok ? 'Sauvegardé ✓' : 'Sauvegarder';
-        if (ok) setTimeout(api.recharger, 500);                       // modifications publiées : le site se recharge tout seul pour les afficher
-      }, 'primary');
       btn('Réinitialiser le mot de passe', api.changePassword);
     } else {
       btn('Exporter pour publier', exporter, 'primary');

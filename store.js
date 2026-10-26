@@ -96,8 +96,22 @@ const Store = (() => {
     catch (e) {}
     dropCache();                                                  // la copie du site gardée pour l'affichage rapide prend aussi de la place : on la libère, elle se recrée toute seule
     try { localStorage.setItem(KEY, JSON.stringify(draft)); return true; }
-    catch (e) { alert('Le stockage du navigateur est plein. Exportez vos données puis retirez des images.'); return false; }
+    catch (e) { return true; }                                    // navigateur plein : le brouillon reste en mémoire, la sauvegarde automatique le publie
   };
+  /* sauvegarde automatique : chaque modification de l'administrateur est publiée peu après, sans attendre le clic sur « Sauvegarder » */
+  let autoTimer = null, saving = Promise.resolve();
+  const publish = () => (saving = saving.then(async () => {
+    for (const k of Object.keys(draft)) {
+      const sent = JSON.stringify(draft[k]);
+      if (!(await call('save_content', { p_pass: adminPw(), p_key: k, p_value: draft[k] }, k))) return false;
+      remote[k] = JSON.parse(sent);
+      if (k in draft && JSON.stringify(draft[k]) === sent) delete draft[k];   // modifié entre-temps : reste en brouillon pour le prochain envoi
+    }
+    if (Object.keys(draft).length) persist(); else clearDraft();
+    dropCache();
+    return true;
+  }));
+  const autoSave = () => { if (!REMOTE || !adminOn()) return; clearTimeout(autoTimer); autoTimer = setTimeout(publish, 800); };
   const clearDraft = () => { draft = {}; try { localStorage.removeItem(KEY); } catch (e) {} };
   /* le brouillon n'est visible que de l'administrateur connecté */
   const base = () => (REMOTE ? remote : {});
@@ -110,17 +124,13 @@ const Store = (() => {
       const b = base();
       return has(b, k) ? clone(b[k]) : has(published, k) ? clone(published[k]) : def;
     },
-    set(k, v) { draft[k] = clone(v); return persist(); },
+    set(k, v) { draft[k] = clone(v); const ok = persist(); autoSave(); return ok; },
     /* tout le contenu actuel, prêt à être exporté */
     all() { return clone(Object.assign({}, published, base(), adminOn() ? draft : {})); },
     hasDraft: () => Object.keys(draft).length > 0,
     replaceDraft(obj) { draft = clone(obj) || {}; return persist(); },
     /* publie le brouillon pour tous les visiteurs ; true si tout est enregistré */
-    async save() {
-      for (const k of Object.keys(draft)) if (!(await call('save_content', { p_pass: adminPw(), p_key: k, p_value: draft[k] }, k))) return false;
-      Object.assign(remote, draft); clearDraft(); dropCache();
-      return true;
-    },
+    async save() { clearTimeout(autoTimer); return publish(); },
     discardDraft: clearDraft,
     /* compteur de visiteurs (administrateur) : { total, today }, ou null si indisponible */
     async visits() {
