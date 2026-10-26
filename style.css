@@ -262,13 +262,14 @@ h2 {
 .day.has-event { cursor: pointer; background: rgba(255,255,255,.07); border-color: var(--gold-soft); transition: background .25s, color .25s; }
 .day.has-event:hover, .day.selected { background: var(--gold); color: #000; }
 .day .rune { font-family: var(--f-rune); font-style: normal; font-size: .7rem; line-height: 1; }
-.cal-detail { min-height: 8rem; }
+.cal-side { align-self: stretch; display: flex; flex-direction: column; }   /* même hauteur que le calendrier : la liste des rendez-vous descend se caler sur son bord bas */
+.cal-detail { min-height: 5rem; }
 .event { display: flex; gap: 1rem; padding: 1.1rem 1.2rem; background: var(--panel); border: 1px solid var(--gold-soft); border-left: 4px solid var(--gold); margin-bottom: 1rem; }
 .event .ev-rune { font-size: 2rem; letter-spacing: 0; }
 .event h4 { font-family: var(--f-title); font-weight: 400; font-size: 1.3rem; color: var(--gold); }
 .event p { font-size: 1rem; line-height: 1.5; }
 .ev-meta { color: var(--muted); font-family: var(--f-head); font-size: .8rem !important; letter-spacing: .08em; text-transform: uppercase; }
-.up-title-h { font-family: var(--f-head); letter-spacing: .2em; text-transform: uppercase; font-size: .85rem; color: var(--muted); margin: 1.5rem 0 .6rem; font-weight: 400; }
+.up-title-h { font-family: var(--f-head); letter-spacing: .2em; text-transform: uppercase; font-size: .85rem; color: var(--muted); margin: auto 0 .6rem; padding-top: 1.5rem; font-weight: 400; }
 .cal-upcoming { list-style: none; }
 .cal-upcoming button { width: 100%; display: grid; grid-template-columns: 1.6rem auto 1fr; gap: .8rem; align-items: baseline; text-align: left; background: none; border: 0; border-bottom: 1px solid #222; color: var(--text); padding: .6rem .2rem; cursor: pointer; font: inherit; font-size: 1rem; transition: background .25s, padding .25s; }
 .cal-upcoming button:hover { background: rgba(255,255,255,.06); padding-left: .6rem; }

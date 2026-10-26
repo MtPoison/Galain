@@ -99,7 +99,7 @@
   }
 
   function renderUpcoming() {
-    upcomingEl.innerHTML = upcoming.slice(0, 5).map(e => `
+    upcomingEl.innerHTML = upcoming.slice(0, 8).map(e => `
       <li><button type="button" data-date="${esc(keyOf(e))}">
         <span class="rune">●</span>
         <span class="up-date">${esc(when(e))}</span>
