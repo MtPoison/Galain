@@ -59,7 +59,7 @@ create function change_admin_password(p_old text, p_new text) returns boolean
 language plpgsql security definer set search_path = public, extensions as $$
 begin
   if not check_admin(p_old) then return false; end if;
-  if p_new is null or length(p_new) < 8 or length(p_new) > 200 then raise exception 'mot de passe trop court (8 caractères minimum)'; end if;
+  if p_new is null or length(p_new) < 1 or length(p_new) > 200 then raise exception 'mot de passe vide ou trop long'; end if;
   update admin_secret set hash = crypt(p_new, gen_salt('bf')) where id = 1;
   return true;
 end $$;

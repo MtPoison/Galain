@@ -325,7 +325,7 @@ const Admin = (() => {
       catch (err) { msg.textContent = 'Connexion au serveur impossible.'; return; }
       msg.textContent = '';
       if (!bon) return ancien.erreur('Mauvais mot de passe.');
-      if (nouveau.value.length < 8) return nouveau.erreur('Mot de passe trop court (8 caractères minimum).');
+      if (!nouveau.value) return nouveau.erreur('Le mot de passe ne peut pas être vide.');
       if (nouveau.value !== confirm.value) return confirm.erreur('Les deux mots de passe sont différents.');
       if (Store.remote && !(await Store.changePassword(ancien.value, nouveau.value))) { msg.textContent = ''; return; }
       if (!Store.remote) localStorage.setItem(PASS, nouveau.value);
