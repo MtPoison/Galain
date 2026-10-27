@@ -53,9 +53,6 @@
   /* ---------- la moto (groupe qui avance) ---------- */
   const bike = new T.Group(); scene.add(bike);
   let bikeSprite;
-  /* roues : disque central (jante, rayons, hub) découpé dans l'image et tourné à part ; r = rayon du disque, R = rayon du pneu (px de l'image) */
-  const WHEELS = [{ cx: 88, cy: 272, r: 45, R: 78 }, { cx: 520, cy: 270, r: 58, R: 91 }];
-  const wheelMeshes = [];
 
   function buildBike(img) {
     const tex = new T.Texture(img); tex.anisotropy = 8; tex.needsUpdate = true;
@@ -77,23 +74,8 @@
     const glow = new T.Mesh(new T.PlaneGeometry((IMG_W + pad * 2) * SC, (IMG_H + pad * 2) * SC), light(glowTex, { opacity: 0.55 }));
     glow.position.set(0, cy, -0.2); bike.add(glow);
 
-    /* image fixe de la moto, sans le centre des roues (remplacé par les disques qui tournent) */
-    const body = document.createElement('canvas'); body.width = IMG_W; body.height = IMG_H;
-    const bd = body.getContext('2d'); bd.drawImage(img, 0, 0); bd.globalCompositeOperation = 'destination-out';
-    WHEELS.forEach(w => { bd.beginPath(); bd.arc(w.cx, w.cy, w.r - 1, 0, Math.PI * 2); bd.fill(); });
-    const bodyTex = new T.Texture(body); bodyTex.anisotropy = 8; bodyTex.needsUpdate = true;
-    bikeSprite = new T.Mesh(new T.PlaneGeometry(W, H), basic(bodyTex, { depthWrite: true }));
+    bikeSprite = new T.Mesh(new T.PlaneGeometry(W, H), basic(tex, { depthWrite: true }));
     bikeSprite.position.set(0, cy, 0); bike.add(bikeSprite);
-
-    WHEELS.forEach(w => {
-      const k = 2, c = document.createElement('canvas'); c.width = c.height = w.r * 2 * k;
-      const g = c.getContext('2d'); g.beginPath(); g.arc(w.r * k, w.r * k, w.r * k, 0, Math.PI * 2); g.clip();
-      g.drawImage(img, (w.r - w.cx) * k, (w.r - w.cy) * k, IMG_W * k, IMG_H * k);
-      const tx = new T.Texture(c); tx.anisotropy = 8; tx.needsUpdate = true;
-      const m = new T.Mesh(new T.PlaneGeometry(w.r * 2 * SC, w.r * 2 * SC), basic(tx, { depthWrite: true }));
-      const p = px(w.cx, w.cy); m.position.set(p.x, p.y, 0.01); bike.add(m);
-      wheelMeshes.push({ mesh: m, R: w.R * SC });
-    });
 
     /* reflet du phare */
     const lamp = px(460, 115);
@@ -219,10 +201,9 @@
 
   function update(dt, el) {
     t += dt;
-    /* trajet de gauche à droite en accélération (easeInCirc) ; les roues roulent sans glisser */
+    /* trajet de gauche à droite en accélération (easeInCirc) */
     const bx = startX + (endX - startX) * easeInCirc(Math.min(t / DURATION, 1));
     bike.position.x = bx;
-    wheelMeshes.forEach(w => { w.mesh.rotation.z = -(bx - startX) / w.R; });
     bike.visible = bx < endX;
     bike.position.y = Math.sin(t * 15) * 0.004 + Math.sin(t * 6.1) * 0.005;
     bike.rotation.z = Math.sin(t * 4.3) * 0.004;
